@@ -1,0 +1,26 @@
+<use name=FWCore/Framework>
+<use name=FWCore/ParameterSet>
+<use name=DataFormats/Common>
+<use name=DataFormats/HepMCCandidate>
+<use name=DataFormats/PatCandidates>
+<use name=DataFormats/Provenance>
+<use name=PhysicsTools/JetMCUtils>
+<use name=DQMServices/Core>
+<use name=TauAnalysis/DQMTools>
+<use name=TauAnalysis/GenSimTools>
+<use name=root>
+
+<export>
+  <lib name=TauAnalysisCore>
+  <use name=FWCore/Framework>
+  <use name=FWCore/ParameterSet>
+  <use name=DataFormats/Common>
+  <use name=DataFormats/HepMCCandidate>
+  <use name=DataFormats/PatCandidates>
+  <use name=DataFormats/Provenance>
+  <use name=PhysicsTools/JetMCUtils>
+  <use name=DQMServices/Core>
+  <use name=TauAnalysis/DQMTools>
+  <use name=TauAnalysis/GenSimTools>
+  <use name=root>
+</export>

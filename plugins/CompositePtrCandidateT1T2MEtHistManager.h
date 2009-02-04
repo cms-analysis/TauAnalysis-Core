@@ -8,18 +8,18 @@
 #include "TauAnalysis/Core/interface/HistManagerBase.h"
 #include "DQMServices/Core/interface/DQMStore.h"
 #include "DQMServices/Core/interface/MonitorElement.h"
-#include "AnalysisDataFormats/TauAnalysis/interface/CompositeRefCandidateT1T2MEt.h"
+#include "AnalysisDataFormats/TauAnalysis/interface/CompositePtrCandidateT1T2MEt.h"
 
 #include <vector>
 #include <string>
 
 template<typename T1, typename T2>
-class CompositeRefCandidateT1T2MEtHistManager : public HistManagerBase 
+class CompositePtrCandidateT1T2MEtHistManager : public HistManagerBase 
 {
  public:
   
-  explicit CompositeRefCandidateT1T2MEtHistManager(const edm::ParameterSet&);
-  ~CompositeRefCandidateT1T2MEtHistManager();
+  explicit CompositePtrCandidateT1T2MEtHistManager(const edm::ParameterSet&);
+  ~CompositePtrCandidateT1T2MEtHistManager();
   
   void bookHistograms(const edm::EventSetup&);
   void fillHistograms(const edm::Event&, const edm::EventSetup&);

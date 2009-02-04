@@ -1,14 +1,14 @@
-#include "TauAnalysis/Core/plugins/CompositeRefCandidateT1T2MEtHistManager.h"
+#include "TauAnalysis/Core/plugins/CompositePtrCandidateT1T2MEtHistManager.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
-#include "AnalysisDataFormats/TauAnalysis/interface/CompositeRefCandidateT1T2MEt.h"
-#include "AnalysisDataFormats/TauAnalysis/interface/CompositeRefCandidateT1T2MEtFwd.h"
+#include "AnalysisDataFormats/TauAnalysis/interface/CompositePtrCandidateT1T2MEt.h"
+#include "AnalysisDataFormats/TauAnalysis/interface/CompositePtrCandidateT1T2MEtFwd.h"
 
 #include <TMath.h>
 
 template<typename T1, typename T2>
-bool matchesGenCandidatePair(const CompositeRefCandidateT1T2MEt<T1,T2>& compositeRefCandidate)
+bool matchesGenCandidatePair(const CompositePtrCandidateT1T2MEt<T1,T2>& compositePtrCandidate)
 {
   bool isGenMatched = false;
 // not implemented yet...
@@ -20,9 +20,9 @@ bool matchesGenCandidatePair(const CompositeRefCandidateT1T2MEt<T1,T2>& composit
 //
 
 template<typename T1, typename T2>
-CompositeRefCandidateT1T2MEtHistManager<T1,T2>::CompositeRefCandidateT1T2MEtHistManager(const edm::ParameterSet& cfg)
+CompositePtrCandidateT1T2MEtHistManager<T1,T2>::CompositePtrCandidateT1T2MEtHistManager(const edm::ParameterSet& cfg)
 {
-  //std::cout << "<CompositeRefCandidateT1T2MEtHistManager::CompositeRefCandidateT1T2MEtHistManager>:" << std::endl;
+  //std::cout << "<CompositePtrCandidateT1T2MEtHistManager::CompositePtrCandidateT1T2MEtHistManager>:" << std::endl;
 
   diTauCandidateSrc_ = cfg.getParameter<edm::InputTag>("diTauCandidateSource");
   //std::cout << " diTauCandidateSrc = " << diTauCandidateSrc_ << std::endl;
@@ -35,15 +35,15 @@ CompositeRefCandidateT1T2MEtHistManager<T1,T2>::CompositeRefCandidateT1T2MEtHist
 }
 
 template<typename T1, typename T2>
-CompositeRefCandidateT1T2MEtHistManager<T1,T2>::~CompositeRefCandidateT1T2MEtHistManager()
+CompositePtrCandidateT1T2MEtHistManager<T1,T2>::~CompositePtrCandidateT1T2MEtHistManager()
 {
 //--- nothing to be done yet...
 }
 
 template<typename T1, typename T2>
-void CompositeRefCandidateT1T2MEtHistManager<T1,T2>::bookHistograms(const edm::EventSetup& setup)
+void CompositePtrCandidateT1T2MEtHistManager<T1,T2>::bookHistograms(const edm::EventSetup& setup)
 {
-  //std::cout << "<CompositeRefCandidateT1T2MEtHistManager::bookHistograms>:" << std::endl;
+  //std::cout << "<CompositePtrCandidateT1T2MEtHistManager::bookHistograms>:" << std::endl;
 
   if ( edm::Service<DQMStore>().isAvailable() ) {
     DQMStore& dqmStore = (*edm::Service<DQMStore>());
@@ -87,17 +87,17 @@ void CompositeRefCandidateT1T2MEtHistManager<T1,T2>::bookHistograms(const edm::E
 }
 
 template<typename T1, typename T2>
-void CompositeRefCandidateT1T2MEtHistManager<T1,T2>::fillHistograms(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+void CompositePtrCandidateT1T2MEtHistManager<T1,T2>::fillHistograms(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {  
-  //std::cout << "<CompositeRefCandidateT1T2MEtHistManager::fillHistograms>:" << std::endl; 
+  //std::cout << "<CompositePtrCandidateT1T2MEtHistManager::fillHistograms>:" << std::endl; 
 
-  typedef std::vector<CompositeRefCandidateT1T2MEt<T1,T2> > CompositeRefCandidateCollection;
-  edm::Handle<CompositeRefCandidateCollection> diTauCandidates;
+  typedef std::vector<CompositePtrCandidateT1T2MEt<T1,T2> > CompositePtrCandidateCollection;
+  edm::Handle<CompositePtrCandidateCollection> diTauCandidates;
   iEvent.getByLabel(diTauCandidateSrc_, diTauCandidates);
 
   //std::cout << " diTauCandidates.size = " << diTauCandidates->size() << std::endl;
 
-  for ( typename CompositeRefCandidateCollection::const_iterator diTauCandidate = diTauCandidates->begin(); 
+  for ( typename CompositePtrCandidateCollection::const_iterator diTauCandidate = diTauCandidates->begin(); 
 	diTauCandidate != diTauCandidates->end(); ++diTauCandidate ) {
 
     //bool isGenMatched = matchesGenCandidatePair(*diTauCandidate);
@@ -151,11 +151,11 @@ void CompositeRefCandidateT1T2MEtHistManager<T1,T2>::fillHistograms(const edm::E
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
 
-typedef CompositeRefCandidateT1T2MEtHistManager<reco::Candidate, reco::Candidate> DiCandidatePairHistManager;
-typedef CompositeRefCandidateT1T2MEtHistManager<pat::Electron, pat::Tau> PATElecTauPairHistManager;
-typedef CompositeRefCandidateT1T2MEtHistManager<pat::Muon, pat::Tau> PATMuTauPairHistManager;
-typedef CompositeRefCandidateT1T2MEtHistManager<pat::Tau, pat::Tau> PATDiTauPairHistManager;
-typedef CompositeRefCandidateT1T2MEtHistManager<pat::Electron, pat::Muon> PATElecMuPairHistManager;
+typedef CompositePtrCandidateT1T2MEtHistManager<reco::Candidate, reco::Candidate> DiCandidatePairHistManager;
+typedef CompositePtrCandidateT1T2MEtHistManager<pat::Electron, pat::Tau> PATElecTauPairHistManager;
+typedef CompositePtrCandidateT1T2MEtHistManager<pat::Muon, pat::Tau> PATMuTauPairHistManager;
+typedef CompositePtrCandidateT1T2MEtHistManager<pat::Tau, pat::Tau> PATDiTauPairHistManager;
+typedef CompositePtrCandidateT1T2MEtHistManager<pat::Electron, pat::Muon> PATElecMuPairHistManager;
 
 DEFINE_EDM_PLUGIN(HistManagerPluginFactory, DiCandidatePairHistManager, "DiCandidatePairHistManager");
 DEFINE_EDM_PLUGIN(HistManagerPluginFactory, PATElecTauPairHistManager, "PATElecTauPairHistManager");

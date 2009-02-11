@@ -6,6 +6,7 @@
   <use name=FWCore/ParameterSet>
   <use name=FWCore/Utilities>
   <use name=DataFormats/Common>
+  <use name=DataFormats/L1GlobalTrigger>
   <use name=DataFormats/MuonReco>
   <use name=DataFormats/PatCandidates>
   <use name=PhysicsTools/IsolationAlgos>

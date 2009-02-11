@@ -1,6 +1,7 @@
 <use name=FWCore/Framework>
 <use name=FWCore/ParameterSet>
 <use name=DataFormats/Common>
+<use name=DataFormats/L1GlobalTrigger>
 <use name=DataFormats/HepMCCandidate>
 <use name=DataFormats/PatCandidates>
 <use name=DataFormats/Provenance>
@@ -15,6 +16,7 @@
   <use name=FWCore/Framework>
   <use name=FWCore/ParameterSet>
   <use name=DataFormats/Common>
+  <use name=DataFormats/L1GlobalTrigger>
   <use name=DataFormats/HepMCCandidate>
   <use name=DataFormats/PatCandidates>
   <use name=DataFormats/Provenance>

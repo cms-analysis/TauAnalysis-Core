@@ -4,6 +4,7 @@
 <use name=DataFormats/L1GlobalTrigger>
 <use name=DataFormats/HepMCCandidate>
 <use name=DataFormats/PatCandidates>
+<use name=DataFormats/METReco>
 <use name=DataFormats/Provenance>
 <use name=PhysicsTools/JetMCUtils>
 <use name=DQMServices/Core>
@@ -19,6 +20,7 @@
   <use name=DataFormats/L1GlobalTrigger>
   <use name=DataFormats/HepMCCandidate>
   <use name=DataFormats/PatCandidates>
+  <use name=DataFormats/METReco>
   <use name=DataFormats/Provenance>
   <use name=PhysicsTools/JetMCUtils>
   <use name=DQMServices/Core>

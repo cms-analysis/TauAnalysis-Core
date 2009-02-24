@@ -15,5 +15,6 @@
   <use name=TauAnalysis/DQMTools>
   <use name=TauAnalysis/GenSimTools>
   <use name=TauAnalysis/Core>
+  <use name=AnalysisDataFormats/TauAnalysis>
   <use name=root>
 </library>

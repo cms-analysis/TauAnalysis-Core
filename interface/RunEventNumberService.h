@@ -30,7 +30,8 @@ class RunEventNumberService
   ~RunEventNumberService();
 
   typedef std::vector<std::pair<std::string, bool> > filterResults_type;
-  void update(const edm::RunNumber_t&, const edm::EventNumber_t&, const filterResults_type&, const filterResults_type&, double);
+  void update(edm::RunNumber_t, edm::EventNumber_t, edm::LuminosityBlockNumber_t,
+	      const filterResults_type&, const filterResults_type&, double);
 
  private:
   std::string name_;

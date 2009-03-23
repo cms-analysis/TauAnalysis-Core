@@ -102,14 +102,16 @@ RunEventNumberService::~RunEventNumberService()
 // nothing to be done yet...
 }
 
-void saveRunEventNumber(const std::string& dqmDirectory_store, edm::RunNumber_t runNumber, edm::EventNumber_t eventNumber, double eventWeight)
+void saveRunEventNumber(const std::string& dqmDirectory_store, 
+			edm::RunNumber_t runNumber, edm::EventNumber_t eventNumber, edm::LuminosityBlockNumber_t lsNumber,
+			double eventWeight)
 {
   if ( edm::Service<DQMStore>().isAvailable() ) {
     DQMStore& dqmStore = (*edm::Service<DQMStore>());
     //std::cout << "<store>:" << std::endl;
     if ( dqmDirectory_store != "" ) dqmStore.setCurrentFolder(dqmDirectory_store);
     std::ostringstream meName;
-    meName << "r" << runNumber << "ev" << eventNumber;
+    meName << "r" << runNumber << "ev" << eventNumber << "ls" << lsNumber;
     //std::cout << " meName = " << meName.str() << std::endl;
     std::ostringstream meValue;
     meValue << std::setprecision(3) << eventWeight;
@@ -120,7 +122,7 @@ void saveRunEventNumber(const std::string& dqmDirectory_store, edm::RunNumber_t 
   }
 }
 
-void RunEventNumberService::update(const edm::RunNumber_t& runNumber, const edm::EventNumber_t& eventNumber, 
+void RunEventNumberService::update(edm::RunNumber_t runNumber, edm::EventNumber_t eventNumber, edm::LuminosityBlockNumber_t lsNumber,
 				   const filterResults_type& filterResults_cumulative, 
 				   const filterResults_type& filterResults_individual, double eventWeight)
 {
@@ -174,15 +176,15 @@ void RunEventNumberService::update(const edm::RunNumber_t& runNumber, const edm:
     const filterConfigEntry& entry = it->second;
     
     if ( entry.doSaveRunEventNumbers_passed_ && filterPassed_individual ) 
-      saveRunEventNumber(entry.dqmDirectory_passed_, runNumber, eventNumber, eventWeight);
+      saveRunEventNumber(entry.dqmDirectory_passed_, runNumber, eventNumber, lsNumber, eventWeight);
     if ( entry.doSaveRunEventNumbers_rejected_ && !filterPassed_individual ) 
-      saveRunEventNumber(entry.dqmDirectory_rejected_, runNumber, eventNumber, eventWeight);
+      saveRunEventNumber(entry.dqmDirectory_rejected_, runNumber, eventNumber, lsNumber, eventWeight);
     if ( entry.doSaveRunEventNumbers_exclRejected_ && !filterPassed_individual && numFiltersRejected_individual == 1 ) 
-      saveRunEventNumber(entry.dqmDirectory_exclRejected_, runNumber, eventNumber, eventWeight);
+      saveRunEventNumber(entry.dqmDirectory_exclRejected_, runNumber, eventNumber, lsNumber, eventWeight);
     if ( entry.doSaveRunEventNumbers_passed_cumulative_ && previousFiltersPassed && filterPassed_cumulative ) 
-      saveRunEventNumber(entry.dqmDirectory_passed_cumulative_, runNumber, eventNumber, eventWeight);
+      saveRunEventNumber(entry.dqmDirectory_passed_cumulative_, runNumber, eventNumber, lsNumber, eventWeight);
     if ( entry.doSaveRunEventNumbers_rejected_cumulative_ && previousFiltersPassed && !filterPassed_cumulative ) 
-      saveRunEventNumber(entry.dqmDirectory_rejected_cumulative_, runNumber, eventNumber, eventWeight);
+      saveRunEventNumber(entry.dqmDirectory_rejected_cumulative_, runNumber, eventNumber, lsNumber, eventWeight);
     
     if ( !filterPassed_cumulative ) previousFiltersPassed = false;
   }

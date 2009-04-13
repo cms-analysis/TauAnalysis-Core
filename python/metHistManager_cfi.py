@@ -1,8 +1,8 @@
 import FWCore.ParameterSet.Config as cms
 
 metHistManager = cms.PSet(
-  name = cms.string('metHistManager'),
-  type = cms.string('MEtHistManager'),
+  pluginName = cms.string('metHistManager'),
+  pluginType = cms.string('MEtHistManager'),
       
   metSource = cms.InputTag('layer1METs'),
 

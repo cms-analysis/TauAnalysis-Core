@@ -5,7 +5,7 @@
  *  
  *  Class to print-out cut-flow information contained in FilterStatisticsTables
  *
- *  $Date: 2009/03/04 12:14:19 $
+ *  $Date: 2009/04/16 12:32:30 $
  *  $Revision: 1.1 $
  *  \author Christian Veelken, UC Davis
  */
@@ -20,6 +20,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 class DQMDumpFilterStatisticsTable : public edm::EDAnalyzer
 {
@@ -31,12 +32,14 @@ class DQMDumpFilterStatisticsTable : public edm::EDAnalyzer
 
 private:
   typedef std::vector<std::string> vstring;
-  vstring dqmDirectories_;
+  vstring processes_;
+
+  std::map<std::string, std::string> dqmDirectories_;
 
   vstring columnsSummaryTable_;
 
   FilterStatisticsService* filterStatisticsService_;
-  std::vector<FilterStatisticsTable*> filterStatisticsTables_;
+  std::map<std::string, FilterStatisticsTable*> filterStatisticsTables_;
 
   int cfgError_;
 };

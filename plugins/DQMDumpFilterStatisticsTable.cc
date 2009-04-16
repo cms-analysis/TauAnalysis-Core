@@ -29,10 +29,19 @@ DQMDumpFilterStatisticsTable::DQMDumpFilterStatisticsTable(const edm::ParameterS
 
   filterStatisticsService_ = new FilterStatisticsService();
 
-  dqmDirectories_ = cfg.getParameter<vstring>("dqmDirectories");
-  if ( dqmDirectories_.size() == 0 ) {
-    edm::LogError("DQMDumpFilterStatisticsTable") << " Configuration Parameter dqmDirectories = " << format_vstring(dqmDirectories_)
-						  << " contains no Entries --> skipping !!";
+  edm::ParameterSet dqmDirectoryEntries = cfg.getParameter<edm::ParameterSet>("dqmDirectories");
+  vstring dqmDirectoryEntryNames = dqmDirectoryEntries.getParameterNamesForType<std::string>();
+  for ( vstring::const_iterator dqmDirectoryEntryName = dqmDirectoryEntryNames.begin(); 
+	dqmDirectoryEntryName != dqmDirectoryEntryNames.end(); ++dqmDirectoryEntryName ) {
+    std::string dqmDirectoryEntry = dqmDirectoryEntries.getParameter<std::string>(*dqmDirectoryEntryName);
+
+    processes_.push_back(*dqmDirectoryEntryName);
+
+    dqmDirectories_[*dqmDirectoryEntryName] = dqmDirectoryEntry;
+  }
+
+  if ( processes_.size() == 0 ) {
+    edm::LogError("DQMDumpFilterStatisticsTable") << " Configuration Parameter dqmDirectories contains no Entries --> skipping !!";
     cfgError_ = 1;
   }
 
@@ -43,9 +52,9 @@ DQMDumpFilterStatisticsTable::~DQMDumpFilterStatisticsTable()
 {
   delete filterStatisticsService_;
 
-  for ( std::vector<FilterStatisticsTable*>::iterator it = filterStatisticsTables_.begin();
+  for ( std::map<std::string, FilterStatisticsTable*>::iterator it = filterStatisticsTables_.begin();
 	it != filterStatisticsTables_.end(); ++it ) {
-    delete (*it);
+    delete it->second;
   }
 }
 
@@ -112,24 +121,26 @@ void DQMDumpFilterStatisticsTable::endJob()
   }
 
 //--- load FilterStatisticsTables from DQM directories
-  for ( vstring::const_iterator dqmDirectory = dqmDirectories_.begin();
-	dqmDirectory != dqmDirectories_.end(); ++dqmDirectory ) {
-    FilterStatisticsTable* filterStatisticsTable = filterStatisticsService_->loadFilterStatisticsTable(*dqmDirectory); 
+  for ( vstring::const_iterator process = processes_.begin();
+	process != processes_.end(); ++process ) {
+    const std::string& dqmDirectory = dqmDirectories_[*process];
+
+    FilterStatisticsTable* filterStatisticsTable = filterStatisticsService_->loadFilterStatisticsTable(dqmDirectory); 
 
     if ( filterStatisticsTable ) {
-      filterStatisticsTables_.push_back(filterStatisticsTable);
+      filterStatisticsTables_[*process] = filterStatisticsTable;
     } else {
-      edm::LogError ("DQMDumpFilterStatisticsTable") << " Failed to load FilterStatisticsTable"
-						     << " from dqmDirectory = " << (*dqmDirectory) 
+      edm::LogError ("DQMDumpFilterStatisticsTable") << " Failed to load FilterStatisticsTable from dqmDirectory = " << dqmDirectory
 						     << " --> FilterStatisticsTables will NOT be printed-out !!";
       return;
     }
   }
 
 //--- print FilterStatisticsTables
-  for ( std::vector<FilterStatisticsTable*>::const_iterator filterStatisticsTable = filterStatisticsTables_.begin();
-	filterStatisticsTable != filterStatisticsTables_.end(); ++filterStatisticsTable ) {
-    (*filterStatisticsTable)->print(std::cout);
+  for ( std::vector<std::string>::const_iterator process = processes_.begin();
+	process != processes_.end(); ++process ) {
+    FilterStatisticsTable* filterStatisticsTable = filterStatisticsTables_[*process];
+    filterStatisticsTable->print(std::cout);
   }
 
 //--- print filter statistics (cut-flow) summary tables
@@ -146,13 +157,15 @@ void DQMDumpFilterStatisticsTable::endJob()
 //--- check that number of rows in column
 //    and labels of cuts match for all processes;
 //    print error message, if not
-    const FilterStatisticsTable* refFilterStatisticsTable = (*filterStatisticsTables_.begin());
+    const FilterStatisticsTable* refFilterStatisticsTable = filterStatisticsTables_.begin()->second;
     std::vector<std::string> refFilterTitleColumn = refFilterStatisticsTable->extractFilterTitleColumn();
     size_t numFilters = refFilterTitleColumn.size();
 
-    size_t numProcesses = filterStatisticsTables_.size();
+    size_t numProcesses = processes_.size();
     for ( size_t iProcess = 0; iProcess < numProcesses; ++iProcess ) {
-      FilterStatisticsTable* filterStatisticsTable = filterStatisticsTables_[iProcess];
+      const std::string& process = processes_[iProcess];
+
+      FilterStatisticsTable* filterStatisticsTable = filterStatisticsTables_[process];
 
       std::vector<std::string> filterTitleColumn = filterStatisticsTable->extractFilterTitleColumn();
       if ( filterTitleColumn.size() != numFilters ) {
@@ -180,7 +193,7 @@ void DQMDumpFilterStatisticsTable::endJob()
 	table[iFilter][iProcess] = column[iFilter];
       }
 
-      columnLabels.push_back(filterStatisticsTable->name());
+      columnLabels.push_back(process);
     }
 
     printSummaryTable(std::cout, 30, 20, *columnSummaryTable, columnLabels, refFilterTitleColumn, table, numFilters, numProcesses);

@@ -1,4 +1,4 @@
-#include "TauAnalysis/Core/plugins/DQMDumpFilterStatisticsTable.h"
+#include "TauAnalysis/Core/plugins/DQMDumpFilterStatisticsTables.h"
 
 #include "TauAnalysis/DQMTools/interface/dqmAuxFunctions.h"
 #include "TauAnalysis/DQMTools/interface/generalAuxFunctions.h"
@@ -21,9 +21,9 @@
 #include <fstream>
 #include <map>
 
-DQMDumpFilterStatisticsTable::DQMDumpFilterStatisticsTable(const edm::ParameterSet& cfg)
+DQMDumpFilterStatisticsTables::DQMDumpFilterStatisticsTables(const edm::ParameterSet& cfg)
 {
-  //std::cout << "<DQMDumpFilterStatisticsTable::DQMDumpFilterStatisticsTable>:" << std::endl;
+  //std::cout << "<DQMDumpFilterStatisticsTables::DQMDumpFilterStatisticsTables>:" << std::endl;
 
   cfgError_ = 0;
 
@@ -41,14 +41,14 @@ DQMDumpFilterStatisticsTable::DQMDumpFilterStatisticsTable(const edm::ParameterS
   }
 
   if ( processes_.size() == 0 ) {
-    edm::LogError("DQMDumpFilterStatisticsTable") << " Configuration Parameter dqmDirectories contains no Entries --> skipping !!";
+    edm::LogError("DQMDumpFilterStatisticsTables") << " Configuration Parameter dqmDirectories contains no Entries --> skipping !!";
     cfgError_ = 1;
   }
 
   columnsSummaryTable_ = ( cfg.exists("columnsSummaryTable") ) ? cfg.getParameter<vstring>("columnsSummaryTable") : vstring();
 }
 
-DQMDumpFilterStatisticsTable::~DQMDumpFilterStatisticsTable() 
+DQMDumpFilterStatisticsTables::~DQMDumpFilterStatisticsTables() 
 {
   delete filterStatisticsService_;
 
@@ -58,7 +58,7 @@ DQMDumpFilterStatisticsTable::~DQMDumpFilterStatisticsTable()
   }
 }
 
-void DQMDumpFilterStatisticsTable::analyze(const edm::Event&, const edm::EventSetup&)
+void DQMDumpFilterStatisticsTables::analyze(const edm::Event&, const edm::EventSetup&)
 {
 //--- nothing to be done yet
 }
@@ -71,14 +71,13 @@ void printSummaryTable(std::ostream& stream, unsigned widthNameColumn, unsigned 
 		       const std::vector<std::string>& columnLabels, const std::vector<std::string>& filterTitles,
 		       table_type& table, size_t numFilters, size_t numProcesses)
 {
-  std::cout << "Summary Table for " << summaryTableType << "Selection:" << std::endl;
+  std::cout << "Summary Table for " << summaryTableType << " Selection:" << std::endl;
   std::cout << std::endl;
   for ( std::vector<std::string>::const_iterator columnLabel = columnLabels.begin();
 	columnLabel != columnLabels.end(); ++columnLabel ) {
     if ( columnLabel == columnLabels.begin() ) {
       stream << std::setw(widthNameColumn) << std::left << (*columnLabel);
     } else {
-      stream << " "; 
       for ( unsigned iCharacter = 0; iCharacter < (widthNumberColumns - columnLabel->length()); ++iCharacter ) {
 	stream << " ";
       }
@@ -86,7 +85,7 @@ void printSummaryTable(std::ostream& stream, unsigned widthNameColumn, unsigned 
     }
   }
   stream << std::endl;
-  for ( unsigned iCharacter = 0; iCharacter < widthNameColumn + columnLabels.size()*(widthNumberColumns + 2); ++iCharacter ) {
+  for ( unsigned iCharacter = 0; iCharacter < (widthNameColumn + columnLabels.size()*widthNumberColumns + 4); ++iCharacter ) {
     stream << "-";
   }
   stream << std::endl;
@@ -94,19 +93,19 @@ void printSummaryTable(std::ostream& stream, unsigned widthNameColumn, unsigned 
     stream << std::setw(widthNameColumn) << std::left << filterTitles[iFilter];
     for ( size_t iProcess = 0; iProcess < numProcesses; ++iProcess ) {
       stream << " ";
-      stream << std::setw(widthNumberColumns - 10) << std::setprecision(3) << std::right << table[iFilter][iProcess];
-      for ( unsigned iCharacter = 0; iCharacter < 10; ++iCharacter ) stream << " ";
+      stream << std::setw(widthNumberColumns) << std::setprecision(3) << std::right << table[iFilter][iProcess];
     }
+    stream << std::endl;
   } 
-  for ( unsigned iCharacter = 0; iCharacter < widthNameColumn + columnLabels.size()*(widthNumberColumns + 2); ++iCharacter ) {
+  for ( unsigned iCharacter = 0; iCharacter < (widthNameColumn + columnLabels.size()*widthNumberColumns + 4); ++iCharacter ) {
     stream << "-";
   }
   stream << std::endl << std::endl;  
 }
 
-void DQMDumpFilterStatisticsTable::endJob()
+void DQMDumpFilterStatisticsTables::endJob()
 {
-  //std::cout << "<DQMDumpFilterStatisticsTable::endJob>:" << std::endl;
+  //std::cout << "<DQMDumpFilterStatisticsTables::endJob>:" << std::endl;
 
 //--- check that configuration parameters contain no errors
   if ( cfgError_ ) {
@@ -130,8 +129,8 @@ void DQMDumpFilterStatisticsTable::endJob()
     if ( filterStatisticsTable ) {
       filterStatisticsTables_[*process] = filterStatisticsTable;
     } else {
-      edm::LogError ("DQMDumpFilterStatisticsTable") << " Failed to load FilterStatisticsTable from dqmDirectory = " << dqmDirectory
-						     << " --> FilterStatisticsTables will NOT be printed-out !!";
+      edm::LogError ("DQMDumpFilterStatisticsTables") << " Failed to load FilterStatisticsTable from dqmDirectory = " << dqmDirectory
+						      << " --> FilterStatisticsTables will NOT be printed-out !!";
       return;
     }
   }
@@ -169,14 +168,14 @@ void DQMDumpFilterStatisticsTable::endJob()
 
       std::vector<std::string> filterTitleColumn = filterStatisticsTable->extractFilterTitleColumn();
       if ( filterTitleColumn.size() != numFilters ) {
-	edm::LogError ("DQMDumpFilterStatisticsTable") << " Number of entries in Filter Title columns do not match"
-						       << " --> FilterStatistics summary Tables will NOT be printed-out !!";
+	edm::LogError ("DQMDumpFilterStatisticsTables") << " Number of entries in Filter Title columns do not match"
+							<< " --> FilterStatistics summary Tables will NOT be printed-out !!";
 	return;
       } else {
 	for ( size_t iFilter = 0; iFilter < numFilters; ++iFilter ) {
 	  if ( filterTitleColumn[iFilter] != refFilterTitleColumn[iFilter] ) {
-	    edm::LogError ("DQMDumpFilterStatisticsTable") << " Filter Title columns do not match"
-							   << " --> FilterStatistics summary Tables will NOT be printed-out !!";
+	    edm::LogError ("DQMDumpFilterStatisticsTables") << " Filter Title columns do not match"
+							    << " --> FilterStatistics summary Tables will NOT be printed-out !!";
 	    return;
 	  }
 	}
@@ -184,8 +183,8 @@ void DQMDumpFilterStatisticsTable::endJob()
 
       std::vector<double> column = filterStatisticsTable->extractColumn(*columnSummaryTable, true);
       if ( column.size() != numFilters ) {
-	edm::LogError ("DQMDumpFilterStatisticsTable") << " Number of entries in Title and Number columns do not match"
-						       << " --> FilterStatistics summary Tables will NOT be printed-out !!";
+	edm::LogError ("DQMDumpFilterStatisticsTables") << " Number of entries in Title and Number columns do not match"
+							<< " --> FilterStatistics summary Tables will NOT be printed-out !!";
 	return;
       }
 
@@ -202,4 +201,4 @@ void DQMDumpFilterStatisticsTable::endJob()
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-DEFINE_FWK_MODULE(DQMDumpFilterStatisticsTable);
+DEFINE_FWK_MODULE(DQMDumpFilterStatisticsTables);

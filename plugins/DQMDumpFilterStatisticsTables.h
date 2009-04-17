@@ -1,12 +1,12 @@
-#ifndef TauAnalysis_Core_DQMDumpFilterStatisticsTable_h
-#define TauAnalysis_Core_DQMDumpFilterStatisticsTable_h
+#ifndef TauAnalysis_Core_DQMDumpFilterStatisticsTables_h
+#define TauAnalysis_Core_DQMDumpFilterStatisticsTables_h
 
-/** \class DQMDumpFilterStatisticsTable
+/** \class DQMDumpFilterStatisticsTables
  *  
  *  Class to print-out cut-flow information contained in FilterStatisticsTables
  *
- *  $Date: 2009/04/16 12:32:30 $
- *  $Revision: 1.1 $
+ *  $Date: 2009/04/16 13:27:31 $
+ *  $Revision: 1.2 $
  *  \author Christian Veelken, UC Davis
  */
 
@@ -22,11 +22,11 @@
 #include <vector>
 #include <map>
 
-class DQMDumpFilterStatisticsTable : public edm::EDAnalyzer
+class DQMDumpFilterStatisticsTables : public edm::EDAnalyzer
 {
  public:
-  explicit DQMDumpFilterStatisticsTable(const edm::ParameterSet&);
-  virtual ~DQMDumpFilterStatisticsTable();
+  explicit DQMDumpFilterStatisticsTables(const edm::ParameterSet&);
+  virtual ~DQMDumpFilterStatisticsTables();
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
   virtual void endJob();  
 

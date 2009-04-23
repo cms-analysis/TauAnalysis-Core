@@ -89,9 +89,8 @@ class MEtHistManager : public HistManagerBase
     MonitorElement* hGenMEtDeltaRAWMEt_Pt_;
     MonitorElement* hGenMEtDeltaRAWMEt_Px_;
     MonitorElement* hGenMEtDeltaRAWMEt_Py_;
-    MonitorElement* hMEtGenPt_;
-    MonitorElement* hMEtGenPhi_;
-
+    MonitorElement* hGenMEt_Pt_;
+    MonitorElement* hGenMEt_Phi_;
 };
 
 #endif

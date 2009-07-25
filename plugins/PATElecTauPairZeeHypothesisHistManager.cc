@@ -46,42 +46,42 @@ void PATElecTauPairZeeHypothesisHistManager::bookHistograms()
   DQMStore& dqmStore = (*edm::Service<DQMStore>());
   
   dqmStore.setCurrentFolder(dqmDirectory_store_);
-  
-  hGenElectron1Pt_ = dqmStore.book1D("hGenElectron1Pt", "gen. P_{T}^{e1}", 75, 0., 150.);
-  hGenElectron1Eta_ = dqmStore.book1D("hGenElectron1Eta", "gen. #eta_{e1}", 60, -3., +3.);
-  hGenElectron1Phi_ = dqmStore.book1D("hGenElectron1Phi", "gen. #phi_{e1}", 36, -TMath::Pi(), +TMath::Pi());
 
-  hGenElectron2Pt_ = dqmStore.book1D("hGenElectron2Pt", "gen. P_{T}^{e2}", 75, 0., 150.);
-  hGenElectron2Eta_ = dqmStore.book1D("hGenElectron2Eta", "gen. #eta_{e2}", 60, -3., +3.);
-  hGenElectron2Phi_ = dqmStore.book1D("hGenElectron2Phi", "gen. #phi_{e2}", 36, -TMath::Pi(), +TMath::Pi());
+  hGenElectron1Pt_ = dqmStore.book1D("GenElectron1Pt", "gen. P_{T}^{e1}", 75, 0., 150.);
+  hGenElectron1Eta_ = dqmStore.book1D("GenElectron1Eta", "gen. #eta_{e1}", 60, -3., +3.);
+  hGenElectron1Phi_ = dqmStore.book1D("GenElectron1Phi", "gen. #phi_{e1}", 36, -TMath::Pi(), +TMath::Pi());
 
-  hGenVisMass_ = dqmStore.book1D("hGenVisMass", "gen. Z^{0} Mass", 40, 0., 200.);
+  hGenElectron2Pt_ = dqmStore.book1D("GenElectron2Pt", "gen. P_{T}^{e2}", 75, 0., 150.);
+  hGenElectron2Eta_ = dqmStore.book1D("GenElectron2Eta", "gen. #eta_{e2}", 60, -3., +3.);
+  hGenElectron2Phi_ = dqmStore.book1D("GenElectron2Phi", "gen. #phi_{e2}", 36, -TMath::Pi(), +TMath::Pi());
 
-  hElectron1bestMatchPt_ = dqmStore.book1D("hElectron1bestMatchType", "P_{T} of rec. Object best matching e_{1}", 75, 0., 150.);
-  hElectron1bestMatchEta_= dqmStore.book1D("hElectron1bestMatchType", "#eta of rec. Object best matching e_{1}", 60, -3., +3.);
-  hElectron1bestMatchPhi_ = dqmStore.book1D("hElectron1bestMatchType", "#phi of rec. Object best matching e_{1}", 36, -TMath::Pi(), +TMath::Pi());
-  hElectron1bestMatchType_ = dqmStore.book1D("hElectron1bestMatchType", "Type of rec. Object best matching e_{1}", 10, -0.5, 9.5);
+  hGenVisMass_ = dqmStore.book1D("GenVisMass", "gen. Z^{0} Mass", 40, 0., 200.);
 
-  hElectron2bestMatchPt_ = dqmStore.book1D("hElectron2bestMatchType", "P_{T} of rec. Object best matching e_{2}", 75, 0., 150.);
-  hElectron2bestMatchEta_= dqmStore.book1D("hElectron2bestMatchType", "#eta of rec. Object best matching e_{2}", 60, -3., +3.);
-  hElectron2bestMatchPhi_ = dqmStore.book1D("hElectron2bestMatchType", "#phi of rec. Object best matching e_{2}", 36, -TMath::Pi(), +TMath::Pi());
-  hElectron2bestMatchType_ = dqmStore.book1D("hElectron2bestMatchType", "Type of rec. Object best matching e_{2}", 10, -0.5, 9.5);
+  hElectron1bestMatchPt_ = dqmStore.book1D("Electron1bestMatchPt", "P_{T} of rec. Object best matching e_{1}", 75, 0., 150.);
+  hElectron1bestMatchEta_= dqmStore.book1D("Electron1bestMatchEta", "#eta of rec. Object best matching e_{1}", 60, -3., +3.);
+  hElectron1bestMatchPhi_ = dqmStore.book1D("Electron1bestMatchPhi", "#phi of rec. Object best matching e_{1}", 36, -TMath::Pi(), +TMath::Pi());
+  hElectron1bestMatchType_ = dqmStore.book1D("Electron1bestMatchType", "Type of rec. Object best matching e_{1}", 10, -0.5, 9.5);
 
-  hElectron1bestMatchPtRes_ = dqmStore.book1D("hElectron1bestMatchPtRes", "gen. P_{T}^{e1} - P_{T} of best matching rec. Object", 50, -25., +25.);
-  hElectron1bestMatchEtaRes_ = dqmStore.book1D("hElectron1bestMatchEtaRes", "gen. #eta_{e1} - #eta of best matching rec. Object", 100, -0.25, +0.25);
-  hElectron1bestMatchPhiRes_ = dqmStore.book1D("hElectron1bestMatchPhiRes", "gen. #phi_{e1} - #phi of best matching rec. Object", 100, -0.25, +0.25);
+  hElectron2bestMatchPt_ = dqmStore.book1D("Electron2bestMatchPt", "P_{T} of rec. Object best matching e_{2}", 75, 0., 150.);
+  hElectron2bestMatchEta_= dqmStore.book1D("Electron2bestMatchEta", "#eta of rec. Object best matching e_{2}", 60, -3., +3.);
+  hElectron2bestMatchPhi_ = dqmStore.book1D("Electron2bestMatchPhi", "#phi of rec. Object best matching e_{2}", 36, -TMath::Pi(), +TMath::Pi());
+  hElectron2bestMatchType_ = dqmStore.book1D("Electron2bestMatchType", "Type of rec. Object best matching e_{2}", 10, -0.5, 9.5);
 
-  hElectron2bestMatchPtRes_ = dqmStore.book1D("hElectron2bestMatchPtRes", "gen. P_{T}^{e2} - P_{T} of best matching rec. Object", 50, -25., +25.);
-  hElectron2bestMatchEtaRes_ = dqmStore.book1D("hElectron2bestMatchEtaRes", "gen. #eta_{e2} - #eta of best matching rec. Object", 100, -0.25, +0.25);
-  hElectron2bestMatchPhiRes_ = dqmStore.book1D("hElectron2bestMatchPhiRes", "gen. #phi_{e2} - #phi of best matching rec. Object", 100, -0.25, +0.25);
+  hElectron1bestMatchPtRes_ = dqmStore.book1D("Electron1bestMatchPtRes", "gen. P_{T}^{e1} - P_{T} of best matching rec. Object", 50, -25., +25.);
+  hElectron1bestMatchEtaRes_ = dqmStore.book1D("Electron1bestMatchEtaRes", "gen. #eta_{e1} - #eta of best matching rec. Object", 100, -0.25, +0.25);
+  hElectron1bestMatchPhiRes_ = dqmStore.book1D("Electron1bestMatchPhiRes", "gen. #phi_{e1} - #phi of best matching rec. Object", 100, -0.25, +0.25);
 
-  hVisMassBestMach_ = dqmStore.book1D("hVisMassBestMach", "Z #rightarrow e^{+} e^{-} Mass hypothesis", 40, 0., 200.);
+  hElectron2bestMatchPtRes_ = dqmStore.book1D("Electron2bestMatchPtRes", "gen. P_{T}^{e2} - P_{T} of best matching rec. Object", 50, -25., +25.);
+  hElectron2bestMatchEtaRes_ = dqmStore.book1D("Electron2bestMatchEtaRes", "gen. #eta_{e2} - #eta of best matching rec. Object", 100, -0.25, +0.25);
+  hElectron2bestMatchPhiRes_ = dqmStore.book1D("Electron2bestMatchPhiRes", "gen. #phi_{e2} - #phi of best matching rec. Object", 100, -0.25, +0.25);
 
-  hVisMassFromCaloJets_ = dqmStore.book1D("hVisMassFromCaloJets", "hypothetic Z^{0} Mass from calo. Jets", 40, 0., 200.);
-  hVisMassFromPFJets_ = dqmStore.book1D("hVisMassFromPFJets", "hypothetic Z^{0} Mass from particle-flow Jets", 40, 0., 200.);
-  hVisMassFromTracks_ = dqmStore.book1D("hVisMassFromTracks", "hypothetic Z^{0} Mass from Tracks", 40, 0., 200.);
-  hVisMassFromGsfElectrons_ = dqmStore.book1D("hVisMassFromGsfElectrons", "hypothetic Z^{0} Mass from GSF Electrons", 40, 0., 200.);
-  hVisMassFromGsfTracks_ = dqmStore.book1D("hVisMassFromGsfTracks", "hypothetic Z^{0} Mass from GSF Tracks", 40, 0., 200.);
+  hVisMassBestMach_ = dqmStore.book1D("VisMassBestMach", "Z #rightarrow e^{+} e^{-} Mass hypothesis", 40, 0., 200.);
+
+  hVisMassFromCaloJets_ = dqmStore.book1D("VisMassFromCaloJets", "hypothetic Z^{0} Mass from calo. Jets", 40, 0., 200.);
+  hVisMassFromPFJets_ = dqmStore.book1D("VisMassFromPFJets", "hypothetic Z^{0} Mass from particle-flow Jets", 40, 0., 200.);
+  hVisMassFromTracks_ = dqmStore.book1D("VisMassFromTracks", "hypothetic Z^{0} Mass from Tracks", 40, 0., 200.);
+  hVisMassFromGsfElectrons_ = dqmStore.book1D("VisMassFromGsfElectrons", "hypothetic Z^{0} Mass from GSF Electrons", 40, 0., 200.);
+  hVisMassFromGsfTracks_ = dqmStore.book1D("VisMassFromGsfTracks", "hypothetic Z^{0} Mass from GSF Tracks", 40, 0., 200.);
 }
 
 void PATElecTauPairZeeHypothesisHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetup& es)

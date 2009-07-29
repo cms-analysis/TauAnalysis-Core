@@ -134,7 +134,7 @@ void PATElecTauPairZeeHypothesisHistManager::fillHistograms(const edm::Event& ev
       hGenVisMass_->Fill((ZeeHypothesis->genElec2()->p4() + ZeeHypothesis->genElec2()->p4()).mass());
     }
 
-    hVisMassBestMach_->Fill((ZeeHypothesis->p4Elec1bestMatch() + ZeeHypothesis->p4Elec2bestMatch()).mass());
+    hVisMassBestMach_->Fill(ZeeHypothesis->p4Z0bestMatch().mass());
 
     if ( ZeeHypothesis->elec1matchedCaloJet().isAvailable() &&
 	 ZeeHypothesis->elec2matchedCaloJet().isAvailable() ) {

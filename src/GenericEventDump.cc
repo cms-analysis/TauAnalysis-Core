@@ -17,7 +17,7 @@
 #include "DataFormats/METReco/interface/GenMET.h"
 #include "DataFormats/METReco/interface/GenMETFwd.h"
 
-#include "PhysicsTools/Utilities/interface/deltaR.h"
+#include "DataFormats/Math/interface/deltaR.h"
 
 #include "TauAnalysis/Core/interface/eventDumpAuxFunctions.h"
 #include "TauAnalysis/DQMTools/interface/generalAuxFunctions.h"
@@ -546,10 +546,15 @@ void GenericEventDump::printTauInfo(const edm::Event& evt) const
       }
       *outputStream_ << "  trackIsolation (from isolation cone Tracks) = " << sumPtIsolationConeTracks << std::endl;
       *outputStream_ << "  ecalIsolation = " << patTau->tauID("ecalIsolation") << std::endl;
-      *outputStream_ << "  pfCandidateIsolation = " << patTau->particleIso() << std::endl;
-      *outputStream_ << "  pfChargedHadronIsolation = " << patTau->chargedParticleIso() << std::endl;
-      *outputStream_ << "  pfNeutralHadronIsolation = " << patTau->neutralParticleIso() << std::endl;
-      *outputStream_ << "  pfGammaIsolation = " << patTau->gammaParticleIso() << std::endl;
+      //Lack of particle iso geters for pat::lepton in 31X. get them by hand (is set?)
+      //      *outputStream_ << "  pfCandidateIsolation = " << patTau->particleIso() << std::endl;
+      //      *outputStream_ << "  pfChargedHadronIsolation = " << patTau->chargedParticleIso() << std::endl;
+      //      *outputStream_ << "  pfNeutralHadronIsolation = " << patTau->neutralParticleIso() << std::endl;
+      //      *outputStream_ << "  pfGammaIsolation = " << patTau->gammaParticleIso() << std::endl;
+      *outputStream_ << "  pfCandidateIsolation = " << patTau->isolation(pat::ParticleIso) << std::endl;
+      *outputStream_ << "  pfChargedHadronIsolation = " << patTau->isolation(pat::ChargedHadronIso) << std::endl;
+      *outputStream_ << "  pfNeutralHadronIsolation = " << patTau->isolation(pat::NeutralHadronIso) << std::endl;
+      *outputStream_ << "  pfGammaIsolation = " << patTau->isolation(pat::PhotonIso) << std::endl;
       *outputStream_ << " eVeto = " << patTau->tauID("againstElectron") << std::endl;
       *outputStream_ << " EcalStripSumE/P = " << patTau->ecalStripSumEOverPLead() << std::endl;
       *outputStream_ << " BremsRecoveryE/P = " << patTau->bremsRecoveryEOverPLead() << std::endl;

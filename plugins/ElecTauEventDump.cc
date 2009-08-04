@@ -73,7 +73,7 @@ void ElecTauEventDump::print(const edm::Event& iEvent, const edm::EventSetup& iS
 #include "DataFormats/TauReco/interface/PFTau.h"
 #include "DataFormats/TauReco/interface/PFTauFwd.h"
 
-#include "PhysicsTools/Utilities/interface/deltaR.h"
+#include "DataFormats/Math/interface/deltaR.h"
 
 const std::string genElectronsFromZsCollectionSource = "genElectronsFromZs";
 const std::string recoElectronCollectionSource = "pixelMatchGsfElectrons";

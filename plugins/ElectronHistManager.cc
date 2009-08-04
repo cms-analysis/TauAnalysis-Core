@@ -336,10 +336,18 @@ void ElectronHistManager::fillElectronIsoHistograms(const pat::Electron& patElec
   //std::cout << " neutralParticleIso = " << patElectron.neutralParticleIso() << std::endl;
   //std::cout << " gammaParticleIso = " << patElectron.gammaParticleIso() << std::endl;
   
-  hElectronParticleFlowIsoPt_->Fill(patElectron.particleIso());
-  hElectronPFChargedHadronIsoPt_->Fill(patElectron.chargedParticleIso());
-  hElectronPFNeutralHadronIsoPt_->Fill(patElectron.neutralParticleIso());
-  hElectronPFGammaIsoPt_->Fill(patElectron.gammaParticleIso());
+  ///////
+  //There is no partile iso getters is pat::lepton in 31X, take it by hand (if set)
+  //hElectronParticleFlowIsoPt_->Fill(patElectron.particleIso());
+  //hElectronPFChargedHadronIsoPt_->Fill(patElectron.chargedParticleIso());
+  //hElectronPFNeutralHadronIsoPt_->Fill(patElectron.neutralParticleIso());
+  //hElectronPFGammaIsoPt_->Fill(patElectron.gammaParticleIso());
+  ///////
+  hElectronParticleFlowIsoPt_->Fill(patElectron.isolation(pat::ParticleIso));
+  hElectronPFChargedHadronIsoPt_->Fill(patElectron.isolation(pat::ChargedHadronIso));
+  hElectronPFNeutralHadronIsoPt_->Fill(patElectron.isolation(pat::NeutralHadronIso));
+  hElectronPFGammaIsoPt_->Fill(patElectron.isolation(pat::PhotonIso));
+  ///////
 
   fillLeptonIsoDepositHistograms(patElectron.trackerIsoDeposit(), 
 				 hElectronTrkIsoValProfile_, hElectronTrkIsoEtaDistProfile_, hElectronTrkIsoPhiDistProfile_);
@@ -371,21 +379,21 @@ void ElectronHistManager::fillElectronIsoConeSizeDepHistograms(const pat::Electr
       hElectronParticleFlowIsoPtConeSizeDep_[iConeSize - 1]->Fill(electronParticleFlowIsoDeposit_i);
     }
     
-    if ( patElectron.isoDeposit(pat::ChargedParticleIso) ) {
+    if ( patElectron.isoDeposit(pat::ChargedHadronIso) ) {
       double electronPFChargedHadronIsoDeposit_i 
-	= patElectron.isoDeposit(pat::ChargedParticleIso)->countWithin(isoConeSize_i, electronParticleFlowIsoParam_, false);
+	= patElectron.isoDeposit(pat::ChargedHadronIso)->countWithin(isoConeSize_i, electronParticleFlowIsoParam_, false);
       hElectronPFChargedHadronIsoPtConeSizeDep_[iConeSize - 1]->Fill(electronPFChargedHadronIsoDeposit_i);
     }
     
-    if ( patElectron.isoDeposit(pat::NeutralParticleIso) ) {
+    if ( patElectron.isoDeposit(pat::NeutralHadronIso) ) {
       double electronPFNeutralHadronIsoDeposit_i 
-	= patElectron.isoDeposit(pat::NeutralParticleIso)->countWithin(isoConeSize_i, electronParticleFlowIsoParam_, false);
+	= patElectron.isoDeposit(pat::NeutralHadronIso)->countWithin(isoConeSize_i, electronParticleFlowIsoParam_, false);
       hElectronPFNeutralHadronIsoPtConeSizeDep_[iConeSize - 1]->Fill(electronPFNeutralHadronIsoDeposit_i);
     }
 
-    if ( patElectron.isoDeposit(pat::GammaParticleIso) ) {
+    if ( patElectron.isoDeposit(pat::PhotonIso) ) {
       double electronPFGammaIsoDeposit_i 
-	= patElectron.isoDeposit(pat::GammaParticleIso)->countWithin(isoConeSize_i, electronParticleFlowIsoParam_, false);
+	= patElectron.isoDeposit(pat::PhotonIso)->countWithin(isoConeSize_i, electronParticleFlowIsoParam_, false);
       hElectronPFGammaIsoPtConeSizeDep_[iConeSize - 1]->Fill(electronPFGammaIsoDeposit_i);
     }
   }

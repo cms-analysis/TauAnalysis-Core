@@ -10,7 +10,7 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 
-#include "PhysicsTools/Utilities/interface/deltaR.h"
+#include "DataFormats/Math/interface/deltaR.h"
 
 #include "TauAnalysis/Core/interface/histManagerAuxFunctions.h"
 
@@ -409,10 +409,18 @@ void TauHistManager::fillTauIsoHistograms(const pat::Tau& patTau)
   //std::cout << " neutralParticleIso = " << patTau.neutralParticleIso() << std::endl;
   //std::cout << " gammaParticleIso = " << patTau.gammaParticleIso() << std::endl;
   
-  hTauParticleFlowIsoPt_->Fill(patTau.particleIso());
-  hTauPFChargedHadronIsoPt_->Fill(patTau.chargedParticleIso());
-  hTauPFNeutralHadronIsoPt_->Fill(patTau.neutralParticleIso());
-  hTauPFGammaIsoPt_->Fill(patTau.gammaParticleIso());
+  ///////
+  //There is no partile iso getters is pat::lepton in 31X, take it by hand (if set)
+  //hTauParticleFlowIsoPt_->Fill(patTau.particleIso());
+  //hTauPFChargedHadronIsoPt_->Fill(patTau.chargedParticleIso());
+  //hTauPFNeutralHadronIsoPt_->Fill(patTau.neutralParticleIso());
+  //hTauPFGammaIsoPt_->Fill(patTau.gammaParticleIso());
+  ///////
+  hTauParticleFlowIsoPt_->Fill(patTau.isolation(pat::ParticleIso));
+  hTauPFChargedHadronIsoPt_->Fill(patTau.isolation(pat::ChargedHadronIso));
+  hTauPFNeutralHadronIsoPt_->Fill(patTau.isolation(pat::NeutralHadronIso));
+  hTauPFGammaIsoPt_->Fill(patTau.isolation(pat::PhotonIso));
+  ///////
 
   for ( reco::TrackRefVector::const_iterator isolationTrack = patTau.isolationTracks().begin();
 	isolationTrack != patTau.isolationTracks().end(); ++isolationTrack ) {	  
@@ -436,21 +444,21 @@ void TauHistManager::fillTauIsoConeSizeDepHistograms(const pat::Tau& patTau)
       hTauParticleFlowIsoPtConeSizeDep_[iConeSize - 1]->Fill(tauParticleFlowIsoDeposit_i);
     }
     
-    if ( patTau.isoDeposit(pat::ChargedParticleIso) ) {
+    if ( patTau.isoDeposit(pat::ChargedHadronIso) ) {
       double tauPFChargedHadronIsoDeposit_i 
-	= patTau.isoDeposit(pat::ChargedParticleIso)->countWithin(isoConeSize_i, tauParticleFlowIsoParam_, false);
+	= patTau.isoDeposit(pat::ChargedHadronIso)->countWithin(isoConeSize_i, tauParticleFlowIsoParam_, false);
       hTauPFChargedHadronIsoPtConeSizeDep_[iConeSize - 1]->Fill(tauPFChargedHadronIsoDeposit_i);
     }
     
-    if ( patTau.isoDeposit(pat::NeutralParticleIso) ) {
+    if ( patTau.isoDeposit(pat::NeutralHadronIso) ) {
       double tauPFNeutralHadronIsoDeposit_i 
-	= patTau.isoDeposit(pat::NeutralParticleIso)->countWithin(isoConeSize_i, tauParticleFlowIsoParam_, false);
+	= patTau.isoDeposit(pat::NeutralHadronIso)->countWithin(isoConeSize_i, tauParticleFlowIsoParam_, false);
       hTauPFNeutralHadronIsoPtConeSizeDep_[iConeSize - 1]->Fill(tauPFNeutralHadronIsoDeposit_i);
     }
 
-    if ( patTau.isoDeposit(pat::GammaParticleIso) ) {
+    if ( patTau.isoDeposit(pat::PhotonIso) ) {
       double tauPFGammaIsoDeposit_i 
-	= patTau.isoDeposit(pat::GammaParticleIso)->countWithin(isoConeSize_i, tauParticleFlowIsoParam_, false);
+	= patTau.isoDeposit(pat::PhotonIso)->countWithin(isoConeSize_i, tauParticleFlowIsoParam_, false);
       hTauPFGammaIsoPtConeSizeDep_[iConeSize - 1]->Fill(tauPFGammaIsoDeposit_i);
     }
   }

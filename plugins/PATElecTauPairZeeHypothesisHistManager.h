@@ -8,6 +8,7 @@
 #include "TauAnalysis/Core/interface/HistManagerBase.h"
 #include "DQMServices/Core/interface/DQMStore.h"
 #include "DQMServices/Core/interface/MonitorElement.h"
+#include "TauAnalysis/Core/interface/FakeRateJetWeightExtractor.h"
 
 class PATElecTauPairZeeHypothesisHistManager : public HistManagerBase 
 {
@@ -19,12 +20,19 @@ class PATElecTauPairZeeHypothesisHistManager : public HistManagerBase
 //--- histogram booking and filling functions 
 //    inherited from HistManagerBase class
   void bookHistograms();
-  void fillHistograms(const edm::Event&, const edm::EventSetup&);
+  void fillHistograms(const edm::Event&, const edm::EventSetup&, double);
 
 //--- configuration parameters
   edm::InputTag ZeeHypothesisSrc_;
 
+  std::string tauJetWeightSrc_;
+
   std::string dqmDirectory_store_;
+
+//--- "helper" class for accessing weight values
+//    associated to second tau decay products
+//    (efficiency/fake-rate with which the tau-jet passes the tau id. criteria)
+  FakeRateJetWeightExtractor<pat::Tau>* tauJetWeightExtractor_;
 
 //--- histograms
   MonitorElement* hGenElectron1Pt_;

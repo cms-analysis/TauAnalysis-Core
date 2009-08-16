@@ -17,12 +17,18 @@
 //
 
 PATElecTauPairZeeHypothesisHistManager::PATElecTauPairZeeHypothesisHistManager(const edm::ParameterSet& cfg)
-  : dqmError_(0)
+  : tauJetWeightExtractor_(0),
+    dqmError_(0)
 {
   //std::cout << "<PATElecTauPairZeeHypothesisHistManager::PATElecTauPairZeeHypothesisHistManager>:" << std::endl;
 
   ZeeHypothesisSrc_ = cfg.getParameter<edm::InputTag>("ZeeHypothesisSource");
   //std::cout << " ZeeHypothesisSrc = " << ZeeHypothesis_ << std::endl;
+
+  if ( cfg.exists("tauJetWeightSource") ) {
+    tauJetWeightSrc_ = cfg.getParameter<std::string>("tauJetWeightSource");
+    tauJetWeightExtractor_ = new FakeRateJetWeightExtractor<pat::Tau>(tauJetWeightSrc_);
+  }
 
   dqmDirectory_store_ = cfg.getParameter<std::string>("dqmDirectory_store");
   //std::cout << " dqmDirectory_store = " << dqmDirectory_store_ << std::endl;
@@ -84,7 +90,7 @@ void PATElecTauPairZeeHypothesisHistManager::bookHistograms()
   hVisMassFromGsfTracks_ = dqmStore.book1D("VisMassFromGsfTracks", "hypothetic Z^{0} Mass from GSF Tracks", 40, 0., 200.);
 }
 
-void PATElecTauPairZeeHypothesisHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetup& es)
+void PATElecTauPairZeeHypothesisHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetup& es, double evtWeight)
 {  
   //std::cout << "<PATElecTauPairZeeHypothesisHistManager::fillHistograms>:" << std::endl; 
 
@@ -96,54 +102,68 @@ void PATElecTauPairZeeHypothesisHistManager::fillHistograms(const edm::Event& ev
   edm::Handle<PATElecTauPairZeeHypothesisCollection> ZeeHypotheses;
   evt.getByLabel(ZeeHypothesisSrc_, ZeeHypotheses);
 
+  double tauJetWeightSum = 0.;
+  if ( tauJetWeightExtractor_ ) {
+    for ( PATElecTauPairZeeHypothesisCollection::const_iterator ZeeHypothesis = ZeeHypotheses->begin();
+	  ZeeHypothesis != ZeeHypotheses->end(); ++ZeeHypothesis ) {
+      tauJetWeightSum += (*tauJetWeightExtractor_)(*ZeeHypothesis->elecTauPair()->leg2());
+    }
+  }
+
   for ( PATElecTauPairZeeHypothesisCollection::const_iterator ZeeHypothesis = ZeeHypotheses->begin();
 	ZeeHypothesis != ZeeHypotheses->end(); ++ZeeHypothesis ) {
     
-    hElectron1bestMatchPt_->Fill(ZeeHypothesis->p4Elec1bestMatch().pt());
-    hElectron1bestMatchEta_->Fill(ZeeHypothesis->p4Elec1bestMatch().eta());
-    hElectron1bestMatchPhi_->Fill(ZeeHypothesis->p4Elec1bestMatch().phi());
-    hElectron1bestMatchType_->Fill(ZeeHypothesis->typeElec1bestMatch());
+    double weight = evtWeight;
+    if ( tauJetWeightExtractor_ ) {
+      double tauJetWeight = (*tauJetWeightExtractor_)(*ZeeHypothesis->elecTauPair()->leg2());
+      weight *= (tauJetWeight/tauJetWeightSum);
+    }
 
-    hElectron2bestMatchPt_->Fill(ZeeHypothesis->p4Elec2bestMatch().pt());
-    hElectron2bestMatchEta_->Fill(ZeeHypothesis->p4Elec2bestMatch().eta());
-    hElectron2bestMatchPhi_->Fill(ZeeHypothesis->p4Elec2bestMatch().phi());
-    hElectron2bestMatchType_->Fill(ZeeHypothesis->typeElec2bestMatch());
+    hElectron1bestMatchPt_->Fill(ZeeHypothesis->p4Elec1bestMatch().pt(), weight);
+    hElectron1bestMatchEta_->Fill(ZeeHypothesis->p4Elec1bestMatch().eta(), weight);
+    hElectron1bestMatchPhi_->Fill(ZeeHypothesis->p4Elec1bestMatch().phi(), weight);
+    hElectron1bestMatchType_->Fill(ZeeHypothesis->typeElec1bestMatch(), weight);
+
+    hElectron2bestMatchPt_->Fill(ZeeHypothesis->p4Elec2bestMatch().pt(), weight);
+    hElectron2bestMatchEta_->Fill(ZeeHypothesis->p4Elec2bestMatch().eta(), weight);
+    hElectron2bestMatchPhi_->Fill(ZeeHypothesis->p4Elec2bestMatch().phi(), weight);
+    hElectron2bestMatchType_->Fill(ZeeHypothesis->typeElec2bestMatch(), weight);
 
     if ( ZeeHypothesis->genElec1().isAvailable() ) {
-      hGenElectron1Pt_->Fill(ZeeHypothesis->genElec1()->pt());
-      hGenElectron1Eta_->Fill(ZeeHypothesis->genElec1()->eta());
-      hGenElectron1Phi_->Fill(ZeeHypothesis->genElec1()->phi());
+      hGenElectron1Pt_->Fill(ZeeHypothesis->genElec1()->pt(), weight);
+      hGenElectron1Eta_->Fill(ZeeHypothesis->genElec1()->eta(), weight);
+      hGenElectron1Phi_->Fill(ZeeHypothesis->genElec1()->phi(), weight);
 
-      hElectron1bestMatchPtRes_->Fill(ZeeHypothesis->genElec1()->pt() - ZeeHypothesis->p4Elec1bestMatch().pt());
-      hElectron1bestMatchEtaRes_->Fill(ZeeHypothesis->genElec1()->eta() - ZeeHypothesis->p4Elec1bestMatch().eta());
-      hElectron1bestMatchPhiRes_->Fill(ZeeHypothesis->genElec1()->phi() - ZeeHypothesis->p4Elec1bestMatch().phi());
+      hElectron1bestMatchPtRes_->Fill(ZeeHypothesis->genElec1()->pt() - ZeeHypothesis->p4Elec1bestMatch().pt(), weight);
+      hElectron1bestMatchEtaRes_->Fill(ZeeHypothesis->genElec1()->eta() - ZeeHypothesis->p4Elec1bestMatch().eta(), weight);
+      hElectron1bestMatchPhiRes_->Fill(ZeeHypothesis->genElec1()->phi() - ZeeHypothesis->p4Elec1bestMatch().phi(), weight);
     }
 
     if ( ZeeHypothesis->genElec2().isAvailable() ) {
-      hGenElectron2Pt_->Fill(ZeeHypothesis->genElec2()->pt());
-      hGenElectron2Eta_->Fill(ZeeHypothesis->genElec2()->eta());
-      hGenElectron2Phi_->Fill(ZeeHypothesis->genElec2()->phi());
+      hGenElectron2Pt_->Fill(ZeeHypothesis->genElec2()->pt(), weight);
+      hGenElectron2Eta_->Fill(ZeeHypothesis->genElec2()->eta(), weight);
+      hGenElectron2Phi_->Fill(ZeeHypothesis->genElec2()->phi(), weight);
 
-      hElectron2bestMatchPtRes_->Fill(ZeeHypothesis->genElec2()->pt() - ZeeHypothesis->p4Elec2bestMatch().pt());
-      hElectron2bestMatchEtaRes_->Fill(ZeeHypothesis->genElec2()->eta() - ZeeHypothesis->p4Elec2bestMatch().eta());
-      hElectron2bestMatchPhiRes_->Fill(ZeeHypothesis->genElec2()->phi() - ZeeHypothesis->p4Elec2bestMatch().phi());
+      hElectron2bestMatchPtRes_->Fill(ZeeHypothesis->genElec2()->pt() - ZeeHypothesis->p4Elec2bestMatch().pt(), weight);
+      hElectron2bestMatchEtaRes_->Fill(ZeeHypothesis->genElec2()->eta() - ZeeHypothesis->p4Elec2bestMatch().eta(), weight);
+      hElectron2bestMatchPhiRes_->Fill(ZeeHypothesis->genElec2()->phi() - ZeeHypothesis->p4Elec2bestMatch().phi(), weight);
     }
 
     if ( ZeeHypothesis->genElec1().isAvailable() &&
 	 ZeeHypothesis->genElec2().isAvailable() ) {
-      hGenVisMass_->Fill((ZeeHypothesis->genElec2()->p4() + ZeeHypothesis->genElec2()->p4()).mass());
+      hGenVisMass_->Fill((ZeeHypothesis->genElec2()->p4() + ZeeHypothesis->genElec2()->p4()).mass(), weight);
     }
 
-    hVisMassBestMach_->Fill(ZeeHypothesis->p4Z0bestMatch().mass());
+    hVisMassBestMach_->Fill(ZeeHypothesis->p4Z0bestMatch().mass(), weight);
 
     if ( ZeeHypothesis->elec1matchedCaloJet().isAvailable() &&
 	 ZeeHypothesis->elec2matchedCaloJet().isAvailable() ) {
-      hVisMassFromCaloJets_->Fill((ZeeHypothesis->elec1matchedCaloJet()->p4() + ZeeHypothesis->elec2matchedCaloJet()->p4()).mass());
+      hVisMassFromCaloJets_->Fill((ZeeHypothesis->elec1matchedCaloJet()->p4() + ZeeHypothesis->elec2matchedCaloJet()->p4()).mass(), weight);
     }
 
     if ( ZeeHypothesis->elec1matchedPFJet().isAvailable() &&
 	 ZeeHypothesis->elec2matchedPFJet().isAvailable() ) {
-      hVisMassFromPFJets_->Fill((ZeeHypothesis->elec1matchedPFJet()->p4() + ZeeHypothesis->elec2matchedPFJet()->p4()).mass());
+      hVisMassFromPFJets_->Fill((ZeeHypothesis->elec1matchedPFJet()->p4() + ZeeHypothesis->elec2matchedPFJet()->p4()).mass(), weight);
     }
 
     if ( ZeeHypothesis->elec1matchedTrack().isAvailable() &&
@@ -152,12 +172,12 @@ void PATElecTauPairZeeHypothesisHistManager::fillHistograms(const edm::Event& ev
       reco::Particle::LorentzVector track1Momentum(track1->px(), track1->py(), track1->pz(), track1->p());
       const edm::Ptr<reco::Track> track2 = ZeeHypothesis->elec2matchedTrack();
       reco::Particle::LorentzVector track2Momentum(track2->px(), track2->py(), track2->pz(), track2->p());
-      hVisMassFromTracks_->Fill((track1Momentum + track2Momentum).mass());
+      hVisMassFromTracks_->Fill((track1Momentum + track2Momentum).mass(), weight);
     }
 
     if ( ZeeHypothesis->elec1matchedGsfElectron().isAvailable() &&
 	 ZeeHypothesis->elec2matchedGsfElectron().isAvailable() ) {
-      hVisMassFromCaloJets_->Fill((ZeeHypothesis->elec1matchedGsfElectron()->p4() + ZeeHypothesis->elec2matchedGsfElectron()->p4()).mass());
+      hVisMassFromCaloJets_->Fill((ZeeHypothesis->elec1matchedGsfElectron()->p4() + ZeeHypothesis->elec2matchedGsfElectron()->p4()).mass(), weight);
     }
 
     if ( ZeeHypothesis->elec1matchedGsfTrack().isAvailable() &&
@@ -166,7 +186,7 @@ void PATElecTauPairZeeHypothesisHistManager::fillHistograms(const edm::Event& ev
       reco::Particle::LorentzVector gsfTrack1Momentum(gsfTrack1->px(), gsfTrack1->py(), gsfTrack1->pz(), gsfTrack1->p());
       const edm::Ptr<reco::Track> gsfTrack2 = ZeeHypothesis->elec2matchedGsfTrack();
       reco::Particle::LorentzVector gsfTrack2Momentum(gsfTrack2->px(), gsfTrack2->py(), gsfTrack2->pz(), gsfTrack2->p());
-      hVisMassFromTracks_->Fill((gsfTrack1Momentum + gsfTrack2Momentum).mass());
+      hVisMassFromTracks_->Fill((gsfTrack1Momentum + gsfTrack2Momentum).mass(), weight);
     }
   }
 }

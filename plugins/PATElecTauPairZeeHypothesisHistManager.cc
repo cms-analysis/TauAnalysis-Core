@@ -36,7 +36,7 @@ PATElecTauPairZeeHypothesisHistManager::PATElecTauPairZeeHypothesisHistManager(c
 
 PATElecTauPairZeeHypothesisHistManager::~PATElecTauPairZeeHypothesisHistManager()
 {
-//--- nothing to be done yet...
+  delete tauJetWeightExtractor_;
 }
 
 void PATElecTauPairZeeHypothesisHistManager::bookHistograms()

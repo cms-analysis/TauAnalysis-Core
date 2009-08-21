@@ -72,22 +72,22 @@ void MEtHistManager::bookHistograms()
   hJES_MEyCorrection_ = dqmStore.book1D("JES_MEyCorrection", "JES_MEyCorrection", 150, -150., 150.);
   
   hRAWplusJESplusMUONplusTAUMEtPtCompGen_ = dqmStore.book1D("RAWplusJESplusMUONplusTAUMEtPtCompGen", "RAWplusJESplusMUONplusTAUMEtPtCompGen", 100, -5.0, +5.0);
-  hRAWplusJESplusMUONplusTAUMEtPtRecVsGen_ = dqmStore.book2D("RAWplusJESplusMUONplusTAUMEtPtRecVsGen", "RAWplusJESplusMUONplusTAUMEtPtRecVsGen", 75, 0., 150., 75, 0., 150.);
+  hRAWplusJESplusMUONplusTAUMEtPtRecVsGen_ = dqmStore.book2D("RAWplusJESplusMUONplusTAUMEtPtRecVsGen", "RAWplusJESplusMUONplusTAUMEtPtRecVsGen", 30, 0., 150., 30, 0., 150.);
   hRAWplusJESplusMUONplusTAUMEtPhiCompGen_ = dqmStore.book1D("RAWplusJESplusMUONplusTAUMEtPhiCompGen", "RAWplusJESplusMUONplusTAUMEtPhiCompGen", 72, -TMath::Pi(), +TMath::Pi());
   hRAWplusJESplusMUONplusTAUMEtPhiRecVsGen_ = dqmStore.book2D("RAWplusJESplusMUONplusTAUMEtPhiRecVsGen", "RAWplusJESplusMUONplusTAUMEtPhiRecVsGen", 36, -TMath::Pi(), +TMath::Pi(), 36, -TMath::Pi(), +TMath::Pi());
   
   hRAWplusJESplusMUONMEtPtCompGen_ = dqmStore.book1D("RAWplusJESplusMUONMEtPtCompGen", "RAWplusJESplusMUONMEtPtCompGen", 100, -5.0, +5.0);
-  hRAWplusJESplusMUONMEtPtRecVsGen_ = dqmStore.book2D("RAWplusJESplusMUONMEtPtRecVsGen", "RAWplusJESplusMUONMEtPtRecVsGen", 75, 0., 150., 75, 0., 150.);
+  hRAWplusJESplusMUONMEtPtRecVsGen_ = dqmStore.book2D("RAWplusJESplusMUONMEtPtRecVsGen", "RAWplusJESplusMUONMEtPtRecVsGen", 30, 0., 150., 30, 0., 150.);
   hRAWplusJESplusMUONMEtPhiCompGen_ = dqmStore.book1D("RAWplusJESplusMUONMEtPhiCompGen", "RAWplusJESplusMUONMEtPhiCompGen", 72, -TMath::Pi(), +TMath::Pi());
   hRAWplusJESplusMUONMEtPhiRecVsGen_ = dqmStore.book2D("RAWplusJESplusMUONMEtPhiRecVsGen", "RAWplusJESplusMUONMEtPhiRecVsGen", 36, -TMath::Pi(), +TMath::Pi(), 36, -TMath::Pi(), +TMath::Pi());
   
   hRAWplusJESMEtPtCompGen_ = dqmStore.book1D("RAWplusJESMEtPtCompGen", "RAWplusJESMEtPtCompGen", 100, -5.0, +5.0);
-  hRAWplusJESMEtPtRecVsGen_ = dqmStore.book2D("RAWplusJESMEtPtRecVsGen", "RAWplusJESMEtPtRecVsGen", 75, 0., 150., 75, 0., 150.);
+  hRAWplusJESMEtPtRecVsGen_ = dqmStore.book2D("RAWplusJESMEtPtRecVsGen", "RAWplusJESMEtPtRecVsGen", 30, 0., 150., 30, 0., 150.);
   hRAWplusJESMEtPhiCompGen_ = dqmStore.book1D("RAWplusJESMEtPhiCompGen", "RAWplusJESMEtPhiCompGen", 72, -TMath::Pi(), +TMath::Pi());
   hRAWplusJESMEtPhiRecVsGen_ = dqmStore.book2D("RAWplusJESMEtPhiRecVsGen", "RAWplusJESMEtPhiRecVsGen", 36, -TMath::Pi(), +TMath::Pi(), 36, -TMath::Pi(), +TMath::Pi());
   
   hRAWMEtPtCompGen_ = dqmStore.book1D("RAWMEtPtCompGen", "RAWMEtPtCompGen", 100, -5.0, +5.0);
-  hRAWMEtPtRecVsGen_ = dqmStore.book2D("RAWMEtPtRecVsGen", "RAWMEtPtRecVsGen", 75, 0., 150., 75, 0., 150.);
+  hRAWMEtPtRecVsGen_ = dqmStore.book2D("RAWMEtPtRecVsGen", "RAWMEtPtRecVsGen", 30, 0., 150., 30, 0., 150.);
   hRAWMEtPhiCompGen_ = dqmStore.book1D("RAWMEtPhiCompGen", "RAWMEtPhiCompGen", 72, -TMath::Pi(), +TMath::Pi());
   hRAWMEtPhiRecVsGen_ = dqmStore.book2D("RAWMEtPhiRecVsGen", "RAWMEtPhiRecVsGen", 36, -TMath::Pi(), +TMath::Pi(), 36, -TMath::Pi(), +TMath::Pi());
   

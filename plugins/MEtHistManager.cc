@@ -92,18 +92,22 @@ void MEtHistManager::bookHistograms()
   hRAWMEtPhiRecVsGen_ = dqmStore.book2D("RAWMEtPhiRecVsGen", "RAWMEtPhiRecVsGen", 36, -TMath::Pi(), +TMath::Pi(), 36, -TMath::Pi(), +TMath::Pi());
   
   hGenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Pt_ = dqmStore.book1D("GenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Pt", "GenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Pt", 150, -150.0, 150.0);
+  hGenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Phi_ = dqmStore.book1D("GenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Phi", "GenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Phi", 36, -TMath::Pi(), +TMath::Pi());
   hGenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Px_ = dqmStore.book1D("GenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Px", "GenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Px", 150, -150.0, 150.0);
   hGenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Py_ = dqmStore.book1D("GenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Py", "GenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Py", 150, -150.0, 150.0);
   
   hGenMEtDeltaRAWplusJESplusMUONMEt_Pt_ = dqmStore.book1D("GenMEtDeltaRAWplusJESplusMUONMEt_Pt", "GenMEtDeltaRAWplusJESplusMUONMEt_Pt", 150, -150.0, 150.0);
+  hGenMEtDeltaRAWplusJESplusMUONMEt_Phi_ = dqmStore.book1D("GenMEtDeltaRAWplusJESplusMUONMEt_Phi", "GenMEtDeltaRAWplusJESplusMUONMEt_Phi", 36, -TMath::Pi(), +TMath::Pi());
   hGenMEtDeltaRAWplusJESplusMUONMEt_Px_ = dqmStore.book1D("GenMEtDeltaRAWplusJESplusMUONMEt_Px", "GenMEtDeltaRAWplusJESplusMUONMEt_Px", 150, -150.0, 150.0);
   hGenMEtDeltaRAWplusJESplusMUONMEt_Py_ = dqmStore.book1D("GenMEtDeltaRAWplusJESplusMUONMEt_Py", "GenMEtDeltaRAWplusJESplusMUONMEt_Py", 150, -150.0, 150.0);
   
   hGenMEtDeltaRAWplusJESMEt_Pt_ = dqmStore.book1D("GenMEtDeltaRAWplusJESMEt_Pt", "GenMEtDeltaRAWplusJESMEt_Pt", 150, -150.0, 150.0);
+  hGenMEtDeltaRAWplusJESMEt_Phi_ = dqmStore.book1D("GenMEtDeltaRAWplusJESMEt_Phi", "GenMEtDeltaRAWplusJESMEt_Phi", 36, -TMath::Pi(), +TMath::Pi());
   hGenMEtDeltaRAWplusJESMEt_Px_ = dqmStore.book1D("GenMEtDeltaRAWplusJESMEt_Px", "GenMEtDeltaRAWplusJESMEt_Px", 150, -150.0, 150.0);
   hGenMEtDeltaRAWplusJESMEt_Py_ = dqmStore.book1D("GenMEtDeltaRAWplusJESMEt_Py", "GenMEtDeltaRAWplusJESMEt_Py", 150, -150.0, 150.0);
   
   hGenMEtDeltaRAWMEt_Pt_ = dqmStore.book1D("GenMEtDeltaRAWMEt_Pt", "GenMEtDeltaRAWMEt_Pt", 150, -150.0, 150.0);
+  hGenMEtDeltaRAWMEt_Phi_ = dqmStore.book1D("GenMEtDeltaRAWMEt_Phi", "GenMEtDeltaRAWMEt_Phi", 36, -TMath::Pi(), +TMath::Pi());
   hGenMEtDeltaRAWMEt_Px_ = dqmStore.book1D("GenMEtDeltaRAWMEt_Px", "GenMEtDeltaRAWMEt_Px", 150, -150.0, 150.0);
   hGenMEtDeltaRAWMEt_Py_ = dqmStore.book1D("GenMEtDeltaRAWMEt_Py", "GenMEtDeltaRAWMEt_Py", 150, -150.0, 150.0);
   
@@ -190,35 +194,40 @@ void MEtHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetup
     //MUONplusTAU_MEtPhi = (MUONplusTAU_MEtPhi>=0) ? MUONplusTAU_MEtPhi : (MUONplusTAU_MEtPhi + (2.0 * TMath::Pi()));
 
     if ( theEventMET.genMET() ) {
-      hRAWplusJESplusMUONplusTAUMEtPtCompGen_->Fill((RAWplusJESplusMUONplusTAU_MEtPt - theEventMET.genMET()->pt())/TMath::Sqrt(theEventMET.genMET()->pt()), evtWeight);
-      hRAWplusJESplusMUONplusTAUMEtPtRecVsGen_->Fill(theEventMET.genMET()->pt(), RAWplusJESplusMUONplusTAU_MEtPt, evtWeight);
-      hRAWplusJESplusMUONplusTAUMEtPhiCompGen_->Fill(RAWplusJESplusMUONplusTAU_MEtPhi - theEventMET.genMET()->phi(), evtWeight);
-      hRAWplusJESplusMUONplusTAUMEtPhiRecVsGen_->Fill(theEventMET.genMET()->phi(), RAWplusJESplusMUONplusTAU_MEtPhi, evtWeight);
-      hRAWplusJESplusMUONMEtPtCompGen_->Fill((RAWplusJESplusMUON_MEtPt - theEventMET.genMET()->pt())/TMath::Sqrt(theEventMET.genMET()->pt()), evtWeight);
-      hRAWplusJESplusMUONMEtPtRecVsGen_->Fill(theEventMET.genMET()->pt(), RAWplusJESplusMUON_MEtPt, evtWeight);
-      hRAWplusJESplusMUONMEtPhiCompGen_->Fill(RAWplusJESplusMUON_MEtPhi - theEventMET.genMET()->phi(), evtWeight);
-      hRAWplusJESplusMUONMEtPhiRecVsGen_->Fill(theEventMET.genMET()->phi(), RAWplusJESplusMUON_MEtPhi, evtWeight);
-      hRAWplusJESMEtPtCompGen_->Fill((RAWplusJES_MEtPt - theEventMET.genMET()->pt())/TMath::Sqrt(theEventMET.genMET()->pt()), evtWeight);
-      hRAWplusJESMEtPtRecVsGen_->Fill(theEventMET.genMET()->pt(), RAWplusJES_MEtPt, evtWeight);
-      hRAWplusJESMEtPhiCompGen_->Fill(RAWplusJES_MEtPhi - theEventMET.genMET()->phi(), evtWeight);
-      hRAWplusJESMEtPhiRecVsGen_->Fill(theEventMET.genMET()->phi(), RAWplusJES_MEtPhi, evtWeight);
-      hRAWMEtPtCompGen_->Fill((RAW_MEtPt - theEventMET.genMET()->pt())/TMath::Sqrt(theEventMET.genMET()->pt()), evtWeight);
-      hRAWMEtPtRecVsGen_->Fill(theEventMET.genMET()->pt(), RAW_MEtPt, evtWeight);
-      hRAWMEtPhiCompGen_->Fill(RAW_MEtPhi - theEventMET.genMET()->phi(), evtWeight);
-      hRAWMEtPhiRecVsGen_->Fill(theEventMET.genMET()->phi(), RAW_MEtPhi, evtWeight);
 
-      hGenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Pt_->Fill(RAWplusJESplusMUONplusTAU_MEtPt - theEventMET.genMET()->pt(), evtWeight);
-      hGenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Px_->Fill(RAWplusJESplusMUONplusTAU_MEtPx - theEventMET.genMET()->px(), evtWeight);
-      hGenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Py_->Fill(RAWplusJESplusMUONplusTAU_MEtPy - theEventMET.genMET()->py(), evtWeight);
-      hGenMEtDeltaRAWplusJESplusMUONMEt_Pt_->Fill(RAWplusJESplusMUON_MEtPt - theEventMET.genMET()->pt(), evtWeight);
-      hGenMEtDeltaRAWplusJESplusMUONMEt_Px_->Fill(RAWplusJESplusMUON_MEtPx - theEventMET.genMET()->px(), evtWeight);
-      hGenMEtDeltaRAWplusJESplusMUONMEt_Py_->Fill(RAWplusJESplusMUON_MEtPy - theEventMET.genMET()->py(), evtWeight);
-      hGenMEtDeltaRAWplusJESMEt_Pt_->Fill(RAWplusJES_MEtPt - theEventMET.genMET()->pt(), evtWeight);
-      hGenMEtDeltaRAWplusJESMEt_Px_->Fill(RAWplusJES_MEtPx - theEventMET.genMET()->px(), evtWeight);
-      hGenMEtDeltaRAWplusJESMEt_Py_->Fill(RAWplusJES_MEtPy - theEventMET.genMET()->py(), evtWeight);
-      hGenMEtDeltaRAWMEt_Pt_->Fill(RAW_MEtPt - theEventMET.genMET()->pt(), evtWeight);
-      hGenMEtDeltaRAWMEt_Px_->Fill(RAW_MEtPx - theEventMET.genMET()->px(), evtWeight);
-      hGenMEtDeltaRAWMEt_Py_->Fill(RAW_MEtPy - theEventMET.genMET()->py(), evtWeight);
+      hRAWplusJESplusMUONplusTAUMEtPtCompGen_->Fill((RAWplusJESplusMUONplusTAU_MEtPt - theEventMET.genMET()->pt())/TMath::Sqrt(theEventMET.genMET()->pt()));
+      hRAWplusJESplusMUONplusTAUMEtPtRecVsGen_->Fill(theEventMET.genMET()->pt(), RAWplusJESplusMUONplusTAU_MEtPt);
+      hRAWplusJESplusMUONplusTAUMEtPhiCompGen_->Fill(RAWplusJESplusMUONplusTAU_MEtPhi - theEventMET.genMET()->phi());
+      hRAWplusJESplusMUONplusTAUMEtPhiRecVsGen_->Fill(theEventMET.genMET()->phi(), RAWplusJESplusMUONplusTAU_MEtPhi);
+      hRAWplusJESplusMUONMEtPtCompGen_->Fill((RAWplusJESplusMUON_MEtPt - theEventMET.genMET()->pt())/TMath::Sqrt(theEventMET.genMET()->pt()));
+      hRAWplusJESplusMUONMEtPtRecVsGen_->Fill(theEventMET.genMET()->pt(), RAWplusJESplusMUON_MEtPt);
+      hRAWplusJESplusMUONMEtPhiCompGen_->Fill(RAWplusJESplusMUON_MEtPhi - theEventMET.genMET()->phi());
+      hRAWplusJESplusMUONMEtPhiRecVsGen_->Fill(theEventMET.genMET()->phi(), RAWplusJESplusMUON_MEtPhi);
+      hRAWplusJESMEtPtCompGen_->Fill((RAWplusJES_MEtPt - theEventMET.genMET()->pt())/TMath::Sqrt(theEventMET.genMET()->pt()));
+      hRAWplusJESMEtPtRecVsGen_->Fill(theEventMET.genMET()->pt(), RAWplusJES_MEtPt);
+      hRAWplusJESMEtPhiCompGen_->Fill(RAWplusJES_MEtPhi - theEventMET.genMET()->phi());
+      hRAWplusJESMEtPhiRecVsGen_->Fill(theEventMET.genMET()->phi(), RAWplusJES_MEtPhi);
+      hRAWMEtPtCompGen_->Fill((RAW_MEtPt - theEventMET.genMET()->pt())/TMath::Sqrt(theEventMET.genMET()->pt()));
+      hRAWMEtPtRecVsGen_->Fill(theEventMET.genMET()->pt(), RAW_MEtPt);
+      hRAWMEtPhiCompGen_->Fill(RAW_MEtPhi - theEventMET.genMET()->phi());
+      hRAWMEtPhiRecVsGen_->Fill(theEventMET.genMET()->phi(), RAW_MEtPhi);
+
+      hGenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Pt_->Fill(RAWplusJESplusMUONplusTAU_MEtPt - theEventMET.genMET()->pt());
+      hGenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Px_->Fill(RAWplusJESplusMUONplusTAU_MEtPx - theEventMET.genMET()->px());
+      hGenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Py_->Fill(RAWplusJESplusMUONplusTAU_MEtPy - theEventMET.genMET()->py());
+      hGenMEtDeltaRAWplusJESplusMUONMEt_Pt_->Fill(RAWplusJESplusMUON_MEtPt - theEventMET.genMET()->pt());
+      hGenMEtDeltaRAWplusJESplusMUONMEt_Px_->Fill(RAWplusJESplusMUON_MEtPx - theEventMET.genMET()->px());
+      hGenMEtDeltaRAWplusJESplusMUONMEt_Py_->Fill(RAWplusJESplusMUON_MEtPy - theEventMET.genMET()->py());
+      hGenMEtDeltaRAWplusJESMEt_Pt_->Fill(RAWplusJES_MEtPt - theEventMET.genMET()->pt());
+      hGenMEtDeltaRAWplusJESMEt_Px_->Fill(RAWplusJES_MEtPx - theEventMET.genMET()->px());
+      hGenMEtDeltaRAWplusJESMEt_Py_->Fill(RAWplusJES_MEtPy - theEventMET.genMET()->py());
+      hGenMEtDeltaRAWMEt_Pt_->Fill(RAW_MEtPt - theEventMET.genMET()->pt());
+      hGenMEtDeltaRAWMEt_Px_->Fill(RAW_MEtPx - theEventMET.genMET()->px());
+      hGenMEtDeltaRAWMEt_Py_->Fill(RAW_MEtPy - theEventMET.genMET()->py());
+      hGenMEtDeltaRAWplusJESplusMUONplusTAUMEt_Phi_->Fill(RAWplusJESplusMUONplusTAU_MEtPhi - theEventMET.genMET()->phi());
+      hGenMEtDeltaRAWplusJESplusMUONMEt_Phi_->Fill(RAWplusJESplusMUON_MEtPhi - theEventMET.genMET()->phi());
+      hGenMEtDeltaRAWplusJESMEt_Phi_->Fill(RAWplusJES_MEtPhi - theEventMET.genMET()->phi());
+      hGenMEtDeltaRAWMEt_Phi_->Fill(RAW_MEtPhi - theEventMET.genMET()->phi());
 
       hGenMEt_Pt_->Fill(theEventMET.genMET()->pt(), evtWeight);
       hGenMEt_Phi_->Fill(theEventMET.genMET()->phi(), evtWeight);

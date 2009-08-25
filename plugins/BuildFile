@@ -18,6 +18,7 @@
   <use name=DQMServices/Core>
   <use name=TauAnalysis/DQMTools>
   <use name=TauAnalysis/GenSimTools>
+  <use name=TauAnalysis/RecoTools>
   <use name=TauAnalysis/Core>
   <use name=AnalysisDataFormats/TauAnalysis>
   <use name=root>

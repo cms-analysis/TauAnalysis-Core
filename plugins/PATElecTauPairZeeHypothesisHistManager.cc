@@ -7,9 +7,6 @@
 
 #include "TauAnalysis/Core/interface/histManagerAuxFunctions.h"
 
-#include "AnalysisDataFormats/TauAnalysis/interface/PATElecTauPairZeeHypothesis.h"
-#include "AnalysisDataFormats/TauAnalysis/interface/PATElecTauPairZeeHypothesisFwd.h"
-
 #include <TMath.h>
 
 //
@@ -32,6 +29,9 @@ PATElecTauPairZeeHypothesisHistManager::PATElecTauPairZeeHypothesisHistManager(c
 
   dqmDirectory_store_ = cfg.getParameter<std::string>("dqmDirectory_store");
   //std::cout << " dqmDirectory_store = " << dqmDirectory_store_ << std::endl;
+
+  std::string normalization_string = cfg.getParameter<std::string>("normalization");
+  normMethod_ = getNormMethod(normalization_string, "diTauCandidates");
 }
 
 PATElecTauPairZeeHypothesisHistManager::~PATElecTauPairZeeHypothesisHistManager()
@@ -90,6 +90,11 @@ void PATElecTauPairZeeHypothesisHistManager::bookHistograms()
   hVisMassFromGsfTracks_ = dqmStore.book1D("VisMassFromGsfTracks", "hypothetic Z^{0} Mass from GSF Tracks", 40, 0., 200.);
 }
 
+double PATElecTauPairZeeHypothesisHistManager::getTauWeight(const PATElecTauPairZeeHypothesis& ZeeHypothesis)
+{
+  return ( tauJetWeightExtractor_ ) ? (*tauJetWeightExtractor_)(*ZeeHypothesis.elecTauPair()->leg2()) : 1.;
+}
+
 void PATElecTauPairZeeHypothesisHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetup& es, double evtWeight)
 {  
   //std::cout << "<PATElecTauPairZeeHypothesisHistManager::fillHistograms>:" << std::endl; 
@@ -103,21 +108,16 @@ void PATElecTauPairZeeHypothesisHistManager::fillHistograms(const edm::Event& ev
   evt.getByLabel(ZeeHypothesisSrc_, ZeeHypotheses);
 
   double tauJetWeightSum = 0.;
-  if ( tauJetWeightExtractor_ ) {
-    for ( PATElecTauPairZeeHypothesisCollection::const_iterator ZeeHypothesis = ZeeHypotheses->begin();
-	  ZeeHypothesis != ZeeHypotheses->end(); ++ZeeHypothesis ) {
-      tauJetWeightSum += (*tauJetWeightExtractor_)(*ZeeHypothesis->elecTauPair()->leg2());
-    }
+  for ( PATElecTauPairZeeHypothesisCollection::const_iterator ZeeHypothesis = ZeeHypotheses->begin();
+	ZeeHypothesis != ZeeHypotheses->end(); ++ZeeHypothesis ) {
+    tauJetWeightSum += getTauWeight(*ZeeHypothesis);
   }
 
   for ( PATElecTauPairZeeHypothesisCollection::const_iterator ZeeHypothesis = ZeeHypotheses->begin();
 	ZeeHypothesis != ZeeHypotheses->end(); ++ZeeHypothesis ) {
     
-    double weight = evtWeight;
-    if ( tauJetWeightExtractor_ ) {
-      double tauJetWeight = (*tauJetWeightExtractor_)(*ZeeHypothesis->elecTauPair()->leg2());
-      weight *= (tauJetWeight/tauJetWeightSum);
-    }
+    double weight = ( normMethod_ == kNormEvents ) ? 
+      evtWeight*(getTauWeight(*ZeeHypothesis)/tauJetWeightSum) : getTauWeight(*ZeeHypothesis);
 
     hElectron1bestMatchPt_->Fill(ZeeHypothesis->p4Elec1bestMatch().pt(), weight);
     hElectron1bestMatchEta_->Fill(ZeeHypothesis->p4Elec1bestMatch().eta(), weight);

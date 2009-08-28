@@ -7,4 +7,7 @@ diTauCandidateZeeHypothesisHistManager = cms.PSet(
     ZeeHypothesisSource = cms.InputTag('elecTauPairZeeHypotheses'),
 
     dqmDirectory_store = cms.string('DiTauCandidateZeeHypothesisQuantities'),
+
+    #normalization = cms.string("diTauCandidates")
+    normalization = cms.string("events")
 )

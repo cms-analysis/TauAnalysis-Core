@@ -5,10 +5,14 @@
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/InputTag.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "TauAnalysis/Core/interface/HistManagerBase.h"
 #include "DQMServices/Core/interface/DQMStore.h"
 #include "DQMServices/Core/interface/MonitorElement.h"
+
+#include "TauAnalysis/Core/interface/HistManagerBase.h"
 #include "TauAnalysis/Core/interface/FakeRateJetWeightExtractor.h"
+
+#include "AnalysisDataFormats/TauAnalysis/interface/PATElecTauPairZeeHypothesis.h"
+#include "AnalysisDataFormats/TauAnalysis/interface/PATElecTauPairZeeHypothesisFwd.h"
 
 class PATElecTauPairZeeHypothesisHistManager : public HistManagerBase 
 {
@@ -20,6 +24,9 @@ class PATElecTauPairZeeHypothesisHistManager : public HistManagerBase
 //--- histogram booking and filling functions 
 //    inherited from HistManagerBase class
   void bookHistograms();
+
+  double getTauWeight(const PATElecTauPairZeeHypothesis&);
+  
   void fillHistograms(const edm::Event&, const edm::EventSetup&, double);
 
 //--- configuration parameters

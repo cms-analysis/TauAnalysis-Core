@@ -23,7 +23,7 @@ bool matchesGenMuon(const pat::Muon& patMuon)
   std::vector<reco::GenParticleRef> associatedGenParticles = patMuon.genParticleRefs();
   for ( std::vector<reco::GenParticleRef>::const_iterator it = associatedGenParticles.begin(); 
 	it != associatedGenParticles.end(); ++it ) {
-    if ( it->ref().isNonnull() && it->ref().isValid() ) {
+    if ( it->isAvailable() ) {
       const reco::GenParticleRef& genParticle = (*it);
       if ( genParticle->pdgId() == -13 || genParticle->pdgId() == +13 ) isGenMuonMatched = true;
     } else {
@@ -64,6 +64,15 @@ MuonHistManager::MuonHistManager(const edm::ParameterSet& cfg)
 
   requireGenMuonMatch_ = cfg.getParameter<bool>("requireGenMuonMatch");
   //std::cout << " requireGenMuonMatch = " << requireGenMuonMatch_ << std::endl;
+
+  std::string normalization_string = cfg.getParameter<std::string>("normalization");
+  normMethod_ = getNormMethod(normalization_string, "muons");
+
+  makeIsoPtCtrlHistograms_ = ( cfg.exists("makeIsoPtCtrlHistograms") ) ? 
+    cfg.getParameter<bool>("makeIsoPtCtrlHistograms") : false;
+
+  makeIsoPtConeSizeDepHistograms_ = ( cfg.exists("makeIsoPtConeSizeDepHistograms") ) ? 
+    cfg.getParameter<bool>("makeIsoPtConeSizeDepHistograms") : false;
 
   numMuonIsoConeSizes_ = 15;
   muonIsoConeSizeIncr_ = 0.1;
@@ -146,6 +155,17 @@ void MuonHistManager::bookHistograms()
   hMuonPFNeutralHadronIsoPt_ = dqmStore.book1D("MuonPFNeutralHadronIsoPt", "MuonPFNeutralHadronIsoPt", 100, 0., 20.);   
   hMuonPFGammaIsoPt_ = dqmStore.book1D("MuonPFGammaIsoPt", "MuonPFGammaIsoPt", 100, 0., 20.);  
   
+//--- book "control" histograms to check agreement between muon isolation variables
+//    computed by PAT-level IsoDeposits based on particle flow 
+//    with values computed on AOD level, based on ECAL recHits/CaloTowers and reco::Tracks
+  if ( makeIsoPtCtrlHistograms_ ) {
+    hMuonPFChargedHadronIsoPtCtrl_ = dqmStore.book2D("MuonPFChargedHadronIsoPtCtrl", "PFChargedHadron vs. reco::Track Isolation P_{T}", 40, 0., 20., 40, 0., 20.);
+    hMuonPFGammaIsoPtCtrl_ = dqmStore.book2D("MuonPFGammaIsoPtCtrl", "PFGamma vs. ECAL recHit/CaloTower Isolation P_{T}", 40, 0., 20., 40, 0., 20.);
+  } else {
+    hMuonPFChargedHadronIsoPtCtrl_ = 0;
+    hMuonPFGammaIsoPtCtrl_ = 0;
+  } 
+
   hMuonTrkIsoValProfile_ = dqmStore.book1D("MuonTrkIsoValProfile", "MuonTrkIsoValProfile", 100, 0., 10.);
   hMuonTrkIsoEtaDistProfile_ = dqmStore.book1D("MuonTrkIsoEtaDistProfile", "MuonTrkIsoEtaDistProfile", 15, 0., 1.5);
   hMuonTrkIsoPhiDistProfile_ = dqmStore.book1D("MuonTrkIsoPhiDistProfile", "MuonTrkIsoPhiDistProfile", 15, 0., 1.5);
@@ -158,40 +178,15 @@ void MuonHistManager::bookHistograms()
   hMuonHcalIsoEtaDistProfile_ = dqmStore.book1D("MuonHcalIsoEtaDistProfile", "MuonHcalIsoEtaDistProfile", 15, 0., 1.5);
   hMuonHcalIsoPhiDistProfile_  = dqmStore.book1D("MuonHcalIsoPhiDistProfile", "MuonHcalIsoPhiDistProfile", 15, 0., 1.5);
   
-  for ( unsigned iConeSize = 1; iConeSize <= numMuonIsoConeSizes_; ++iConeSize ) {
-    std::ostringstream iConeSizeString;
-    iConeSizeString << std::setfill('0') << std::setw(2) << iConeSize;
-    
-    std::string hMuonTrkIsoPtConeSizeDepName_i = std::string("MuonTrkIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
-    hMuonTrkIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonTrkIsoPtConeSizeDepName_i, hMuonTrkIsoPtConeSizeDepName_i, 
-							100, 0., 20.));
-    std::string hMuonEcalIsoPtConeSizeDepName_i = std::string("MuonEcalIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
-    hMuonEcalIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonEcalIsoPtConeSizeDepName_i, hMuonEcalIsoPtConeSizeDepName_i, 
-							 100, 0., 20.));
-    std::string hMuonHcalIsoPtConeSizeDepName_i = std::string("MuonHcalIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
-    hMuonHcalIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonHcalIsoPtConeSizeDepName_i, hMuonHcalIsoPtConeSizeDepName_i, 
-							 100, 0., 20.));
-    
-    std::string hMuonParticleFlowIsoPtConeSizeDepName_i 
-      = std::string("MuonParticleFlowIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
-    hMuonParticleFlowIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonParticleFlowIsoPtConeSizeDepName_i, 
-								 hMuonParticleFlowIsoPtConeSizeDepName_i, 100, 0., 20.));
-    std::string hMuonPFChargedHadronIsoPtConeSizeDepName_i 
-      = std::string("MuonChargedHadronIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
-    hMuonPFChargedHadronIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonPFChargedHadronIsoPtConeSizeDepName_i, 
-								    hMuonPFChargedHadronIsoPtConeSizeDepName_i, 100, 0., 20.));
-    std::string hMuonPFNeutralHadronIsoPtConeSizeDepName_i 
-      = std::string("MuonPFNeutralHadronIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
-    hMuonPFNeutralHadronIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonPFNeutralHadronIsoPtConeSizeDepName_i, 
-								    hMuonPFNeutralHadronIsoPtConeSizeDepName_i, 100, 0., 20.));
-    std::string hMuonPFGammaIsoPtConeSizeDepName_i 
-      = std::string("MuonPFGammaIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
-    hMuonPFGammaIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonPFGammaIsoPtConeSizeDepName_i, 
-							    hMuonPFGammaIsoPtConeSizeDepName_i, 100, 0., 20.));
-  }
+  if ( makeIsoPtConeSizeDepHistograms_ ) bookMuonIsoConeSizeDepHistograms(dqmStore);
 }
 
-void MuonHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetup& es)
+double MuonHistManager::getMuonWeight(const pat::Muon& patMuon)
+{
+  return 1.;
+}
+
+void MuonHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetup& es, double evtWeight)
 {  
   //std::cout << "<MuonHistManager::fillHistograms>:" << std::endl; 
 
@@ -207,7 +202,15 @@ void MuonHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetu
   evt.getByLabel(genParticleSrc_, genParticles);
 
   //std::cout << " patMuons.size = " << patMuons->size() << std::endl;
-  hNumMuons_->Fill(patMuons->size());
+  hNumMuons_->Fill(patMuons->size(), evtWeight);
+
+  double muonWeightSum = 0.;
+  for ( std::vector<pat::Muon>::const_iterator patMuon = patMuons->begin(); 
+	patMuon != patMuons->end(); ++patMuon ) {
+    if ( requireGenMuonMatch_ && !matchesGenMuon(*patMuon) ) continue;
+
+    muonWeightSum += getMuonWeight(*patMuon);
+  }
 
   for ( std::vector<pat::Muon>::const_iterator patMuon = patMuons->begin(); 
 	patMuon != patMuons->end(); ++patMuon ) {
@@ -215,28 +218,30 @@ void MuonHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetu
     //bool isGenMuonMatched = matchesGenMuon(*patMuon);
     //std::cout << " Pt = " << patMuon->pt() << ", eta = " << patMuon->eta() << ", phi = " << patMuon->phi() << std::endl;
     //std::cout << " isGenMuonMatched = " << isGenMuonMatched << std::endl;
-
+    
     if ( requireGenMuonMatch_ && !matchesGenMuon(*patMuon) ) continue;
+    
+    double weight = ( normMethod_ == kNormEvents ) ? evtWeight*(getMuonWeight(*patMuon)/muonWeightSum) : getMuonWeight(*patMuon);
 
-    fillMuonHistograms(*patMuon, hMuonPt_, hMuonEta_, hMuonPhi_);
-    hMuonPtVsEta_->Fill(patMuon->eta(), patMuon->pt());
+    fillMuonHistograms(*patMuon, hMuonPt_, hMuonEta_, hMuonPhi_, weight);
+    hMuonPtVsEta_->Fill(patMuon->eta(), patMuon->pt(), weight);
 
 //--- compare reconstructed muon to generator level one;
 //    normalize difference between reconstructed and generated Pt
 //    to expected Pt dependence of resolution
     if ( patMuon->genLepton() ) {
-      hMuonPtCompToGen_->Fill((patMuon->pt() - patMuon->genLepton()->pt())/patMuon->genLepton()->pt());
-      hMuonThetaCompToGen_->Fill(patMuon->theta() - patMuon->genLepton()->theta());
-      hMuonPhiCompToGen_->Fill(patMuon->phi() - patMuon->genLepton()->phi());
+      hMuonPtCompToGen_->Fill((patMuon->pt() - patMuon->genLepton()->pt())/patMuon->genLepton()->pt(), weight);
+      hMuonThetaCompToGen_->Fill(patMuon->theta() - patMuon->genLepton()->theta(), weight);
+      hMuonPhiCompToGen_->Fill(patMuon->phi() - patMuon->genLepton()->phi(), weight);
     }
 
     int matchingGenParticlePdgId = getMatchingGenParticlePdgId(patMuon->p4(), genParticles);
     if ( matchingGenParticlePdgId == -1 ) {
-      hMuonMatchingGenParticlePdgId_->Fill(-1);
+      hMuonMatchingGenParticlePdgId_->Fill(-1, weight);
     } else if ( abs(matchingGenParticlePdgId) > 22 ) {
-      hMuonMatchingGenParticlePdgId_->Fill(24);
+      hMuonMatchingGenParticlePdgId_->Fill(24, weight);
     } else {
-      hMuonMatchingGenParticlePdgId_->Fill(abs(matchingGenParticlePdgId));
+      hMuonMatchingGenParticlePdgId_->Fill(abs(matchingGenParticlePdgId), weight);
     }
 
     if ( vertexSrc_.label() != "" && patMuon->track().isAvailable() && patMuon->track().isNonnull() ) {
@@ -244,29 +249,29 @@ void MuonHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetu
       evt.getByLabel(vertexSrc_, recoVertices);
       if ( recoVertices->size() >= 1 ) {
 	const reco::Vertex& thePrimaryEventVertex = (*recoVertices->begin());
-	hMuonTrackIPxy_->Fill(patMuon->track()->dxy(thePrimaryEventVertex.position()));
-	hMuonTrackIPz_->Fill(patMuon->track()->dz(thePrimaryEventVertex.position()));
+	hMuonTrackIPxy_->Fill(patMuon->track()->dxy(thePrimaryEventVertex.position()), weight);
+	hMuonTrackIPz_->Fill(patMuon->track()->dz(thePrimaryEventVertex.position()), weight);
       }
     }
 
     const reco::Muon* recoMuon = dynamic_cast<const reco::Muon*>(patMuon->originalObject());
     if ( recoMuon != NULL ) {
       if ( recoMuon->isEnergyValid() ) {
-	hMuonEcalDeposits_->Fill(recoMuon->calEnergy().em);
-	hMuonHcalDeposits_->Fill(recoMuon->calEnergy().had + recoMuon->calEnergy().ho);
-	hMuonCaloDeposits_->Fill(recoMuon->calEnergy().em + recoMuon->calEnergy().had + recoMuon->calEnergy().ho);
+	hMuonEcalDeposits_->Fill(recoMuon->calEnergy().em, weight);
+	hMuonHcalDeposits_->Fill(recoMuon->calEnergy().had + recoMuon->calEnergy().ho, weight);
+	hMuonCaloDeposits_->Fill(recoMuon->calEnergy().em + recoMuon->calEnergy().had + recoMuon->calEnergy().ho, weight);
       }
-      if ( recoMuon->isCaloCompatibilityValid() ) hMuonCaloCompatibility_->Fill(recoMuon->caloCompatibility());
+      if ( recoMuon->isCaloCompatibilityValid() ) hMuonCaloCompatibility_->Fill(recoMuon->caloCompatibility(), weight);
       
-      hMuonNumberOfChambers_->Fill(recoMuon->numberOfChambers());
+      hMuonNumberOfChambers_->Fill(recoMuon->numberOfChambers(), weight);
       double segmentCompatibility = muon::segmentCompatibility(*recoMuon);
-      hMuonSegmentCompatibility_->Fill(segmentCompatibility);
+      hMuonSegmentCompatibility_->Fill(segmentCompatibility, weight);
     } else {
       edm::LogError("analyze") << " Failed to access reco::Muon linked to pat::Muon object --> some histograms will NOT be filled !!";
     }
 
-    fillMuonIsoHistograms(*patMuon);
-    fillMuonIsoConeSizeDepHistograms(*patMuon);
+    fillMuonIsoHistograms(*patMuon, weight);
+    if ( makeIsoPtConeSizeDepHistograms_ ) fillMuonIsoConeSizeDepHistograms(*patMuon, weight);
   }
 }
 
@@ -286,59 +291,100 @@ void MuonHistManager::bookMuonHistograms(DQMStore& dqmStore, MonitorElement*& hM
   hMuonPhi = dqmStore.book1D(hMuonPhiName, hMuonPhiName, 36, -TMath::Pi(), +TMath::Pi());
 }
 
+void MuonHistManager::bookMuonIsoConeSizeDepHistograms(DQMStore& dqmStore)
+{
+  for ( unsigned iConeSize = 1; iConeSize <= numMuonIsoConeSizes_; ++iConeSize ) {
+    std::ostringstream iConeSizeString;
+    iConeSizeString << std::setfill('0') << std::setw(2) << iConeSize;
+    
+    std::string hMuonTrkIsoPtConeSizeDepName_i 
+      = std::string("MuonTrkIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
+    hMuonTrkIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonTrkIsoPtConeSizeDepName_i, 
+							hMuonTrkIsoPtConeSizeDepName_i, 40, 0., 10.));
+    std::string hMuonEcalIsoPtConeSizeDepName_i 
+      = std::string("MuonEcalIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
+    hMuonEcalIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonEcalIsoPtConeSizeDepName_i, 
+							 hMuonEcalIsoPtConeSizeDepName_i, 40, 0., 10.));
+    
+    std::string hMuonHcalIsoPtConeSizeDepName_i 
+      = std::string("MuonHcalIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
+    hMuonHcalIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonHcalIsoPtConeSizeDepName_i, 
+							 hMuonHcalIsoPtConeSizeDepName_i, 40, 0., 10.));
+    
+    std::string hMuonParticleFlowIsoPtConeSizeDepName_i 
+      = std::string("MuonParticleFlowIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
+    hMuonParticleFlowIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonParticleFlowIsoPtConeSizeDepName_i, 
+								 hMuonParticleFlowIsoPtConeSizeDepName_i, 40, 0., 10.));
+    
+    std::string hMuonPFChargedHadronIsoPtConeSizeDepName_i 
+      = std::string("MuonChargedHadronIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
+    hMuonPFChargedHadronIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonPFChargedHadronIsoPtConeSizeDepName_i, 
+								    hMuonPFChargedHadronIsoPtConeSizeDepName_i, 40, 0., 10.));
+    
+    std::string hMuonPFNeutralHadronIsoPtConeSizeDepName_i 
+      = std::string("MuonPFNeutralHadronIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
+    hMuonPFNeutralHadronIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonPFNeutralHadronIsoPtConeSizeDepName_i, 
+								    hMuonPFNeutralHadronIsoPtConeSizeDepName_i, 40, 0., 10.));
+    
+    std::string hMuonPFGammaIsoPtConeSizeDepName_i 
+      = std::string("MuonPFGammaIsoPtConeSizeDep").append("_").append(iConeSizeString.str());
+    hMuonPFGammaIsoPtConeSizeDep_.push_back(dqmStore.book1D(hMuonPFGammaIsoPtConeSizeDepName_i, 
+							    hMuonPFGammaIsoPtConeSizeDepName_i, 40, 0., 10.));
+  }
+}
+
 //
 //-----------------------------------------------------------------------------------------------------------------------
 //
 
-void MuonHistManager::fillMuonHistograms(const pat::Muon& patMuon, MonitorElement* hMuonPt, MonitorElement* hMuonEta, MonitorElement* hMuonPhi)
+void MuonHistManager::fillMuonHistograms(const pat::Muon& patMuon, 
+					 MonitorElement* hMuonPt, MonitorElement* hMuonEta, MonitorElement* hMuonPhi, 
+					 double weight)
 {
   //std::cout << "<MuonHistManager::fillMuonHistograms>:" << std::endl;
 
-  hMuonPt->Fill(patMuon.pt());
-  hMuonEta->Fill(patMuon.eta());
-  hMuonPhi->Fill(patMuon.phi());
+  hMuonPt->Fill(patMuon.pt(), weight);
+  hMuonEta->Fill(patMuon.eta(), weight);
+  hMuonPhi->Fill(patMuon.phi(), weight);
 }
 
-void MuonHistManager::fillMuonIsoHistograms(const pat::Muon& patMuon)
+void MuonHistManager::fillMuonIsoHistograms(const pat::Muon& patMuon, double weight)
 {
   //std::cout << "<MuonHistManager::fillMuonIsoHistograms>:" << std::endl;
 
-  hMuonTrkIsoPt_->Fill(patMuon.trackIso());
-  hMuonEcalIsoPt_->Fill(patMuon.ecalIso());
-  hMuonHcalIsoPt_->Fill(patMuon.hcalIso());
-  hMuonIsoSumPt_->Fill(patMuon.trackIso() + patMuon.ecalIso() + patMuon.hcalIso());
-  hMuonTrkIsoPtRel_->Fill(patMuon.trackIso()/patMuon.pt());
-  hMuonEcalIsoPtRel_->Fill(patMuon.ecalIso()/patMuon.pt());
-  hMuonHcalIsoPtRel_->Fill(patMuon.hcalIso()/patMuon.pt());
-  hMuonIsoSumPtRel_->Fill((patMuon.trackIso() + patMuon.ecalIso() + patMuon.hcalIso())/patMuon.pt());
+  hMuonTrkIsoPt_->Fill(patMuon.trackIso(), weight);
+  hMuonEcalIsoPt_->Fill(patMuon.ecalIso(), weight);
+  hMuonHcalIsoPt_->Fill(patMuon.hcalIso(), weight);
+  hMuonIsoSumPt_->Fill(patMuon.trackIso() + patMuon.ecalIso() + patMuon.hcalIso(), weight);
+  hMuonTrkIsoPtRel_->Fill(patMuon.trackIso()/patMuon.pt(), weight);
+  hMuonEcalIsoPtRel_->Fill(patMuon.ecalIso()/patMuon.pt(), weight);
+  hMuonHcalIsoPtRel_->Fill(patMuon.hcalIso()/patMuon.pt(), weight);
+  hMuonIsoSumPtRel_->Fill((patMuon.trackIso() + patMuon.ecalIso() + patMuon.hcalIso())/patMuon.pt(), weight);
 
   //std::cout << " particleIso = " << patMuon.particleIso() << std::endl;
-  //std::cout << " chargedParticleIso = " << patMuon.chargedParticleIso() << std::endl;
-  //std::cout << " neutralParticleIso = " << patMuon.neutralParticleIso() << std::endl;
-  //std::cout << " gammaParticleIso = " << patMuon.gammaParticleIso() << std::endl;
+  //std::cout << " chargedHadronIso = " << patMuon.chargedHadronIso() << std::endl;
+  //std::cout << " neutralHadronIso = " << patMuon.neutralHadronIso() << std::endl;
+  //std::cout << " photonIso = " << patMuon.photonIso() << std::endl;
   
-  ///////
-  //There is no partile iso getters is pat::lepton in 31X, take it by hand (if set)
-  //hMuonParticleFlowIsoPt_->Fill(patMuon.particleIso());
-  //hMuonPFChargedHadronIsoPt_->Fill(patMuon.chargedParticleIso());
-  //hMuonPFNeutralHadronIsoPt_->Fill(patMuon.neutralParticleIso());
-  //hMuonPFGammaIsoPt_->Fill(patMuon.gammaParticleIso());
-  ///////
-  hMuonParticleFlowIsoPt_->Fill(patMuon.isolation(pat::ParticleIso));
-  hMuonPFChargedHadronIsoPt_->Fill(patMuon.isolation(pat::ChargedHadronIso));
-  hMuonPFNeutralHadronIsoPt_->Fill(patMuon.isolation(pat::NeutralHadronIso));
-  hMuonPFGammaIsoPt_->Fill(patMuon.isolation(pat::PhotonIso));
-  ///////
+  hMuonParticleFlowIsoPt_->Fill(patMuon.particleIso(), weight);
+  hMuonPFChargedHadronIsoPt_->Fill(patMuon.chargedHadronIso(), weight);
+  hMuonPFNeutralHadronIsoPt_->Fill(patMuon.neutralHadronIso(), weight);
+  hMuonPFGammaIsoPt_->Fill(patMuon.photonIso(), weight);
+  
+  if ( makeIsoPtCtrlHistograms_ ) {
+    hMuonPFChargedHadronIsoPtCtrl_->Fill(patMuon.trackIso(), patMuon.chargedHadronIso(), weight);
+    hMuonPFGammaIsoPtCtrl_->Fill(patMuon.ecalIso(), patMuon.photonIso(), weight);
+  }
 
   fillLeptonIsoDepositHistograms(patMuon.trackerIsoDeposit(), 
-				 hMuonTrkIsoValProfile_, hMuonTrkIsoEtaDistProfile_, hMuonTrkIsoPhiDistProfile_);
+				 hMuonTrkIsoValProfile_, hMuonTrkIsoEtaDistProfile_, hMuonTrkIsoPhiDistProfile_, weight);
   fillLeptonIsoDepositHistograms(patMuon.ecalIsoDeposit(), 
-				 hMuonEcalIsoValProfile_, hMuonEcalIsoEtaDistProfile_, hMuonEcalIsoPhiDistProfile_);
+				 hMuonEcalIsoValProfile_, hMuonEcalIsoEtaDistProfile_, hMuonEcalIsoPhiDistProfile_, weight);
   fillLeptonIsoDepositHistograms(patMuon.hcalIsoDeposit(), 
-				 hMuonHcalIsoValProfile_, hMuonHcalIsoEtaDistProfile_, hMuonHcalIsoPhiDistProfile_);
+				 hMuonHcalIsoValProfile_, hMuonHcalIsoEtaDistProfile_, hMuonHcalIsoPhiDistProfile_, weight);
 }
 
-void MuonHistManager::fillMuonIsoConeSizeDepHistograms(const pat::Muon& patMuon)
+void MuonHistManager::fillMuonIsoConeSizeDepHistograms(const pat::Muon& patMuon, double weight)
 {
   //std::cout << "<MuonHistManager::fillMuonIsoConeSizeDepHistograms>:" << std::endl;
 
@@ -346,36 +392,36 @@ void MuonHistManager::fillMuonIsoConeSizeDepHistograms(const pat::Muon& patMuon)
     double isoConeSize_i = iConeSize*muonIsoConeSizeIncr_;
     
     double muonTrkIsoDeposit_i = patMuon.trackerIsoDeposit()->countWithin(isoConeSize_i, muonTrkIsoParam_, false);
-    hMuonTrkIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonTrkIsoDeposit_i);
+    hMuonTrkIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonTrkIsoDeposit_i, weight);
     
     double muonEcalIsoDeposit_i = patMuon.ecalIsoDeposit()->countWithin(isoConeSize_i, muonEcalIsoParam_, false);
-    hMuonEcalIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonEcalIsoDeposit_i);
+    hMuonEcalIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonEcalIsoDeposit_i, weight);
     
     double muonHcalIsoDeposit_i = patMuon.hcalIsoDeposit()->countWithin(isoConeSize_i, muonHcalIsoParam_, false);
-    hMuonHcalIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonHcalIsoDeposit_i);
+    hMuonHcalIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonHcalIsoDeposit_i, weight);
 
     if ( patMuon.isoDeposit(pat::ParticleIso) ) {
       double muonParticleFlowIsoDeposit_i 
 	= patMuon.isoDeposit(pat::ParticleIso)->countWithin(isoConeSize_i, muonParticleFlowIsoParam_, false);
-      hMuonParticleFlowIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonParticleFlowIsoDeposit_i);
+      hMuonParticleFlowIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonParticleFlowIsoDeposit_i, weight);
     }
     
     if ( patMuon.isoDeposit(pat::ChargedHadronIso) ) {
       double muonPFChargedHadronIsoDeposit_i 
 	= patMuon.isoDeposit(pat::ChargedHadronIso)->countWithin(isoConeSize_i, muonParticleFlowIsoParam_, false);
-      hMuonPFChargedHadronIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonPFChargedHadronIsoDeposit_i);
+      hMuonPFChargedHadronIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonPFChargedHadronIsoDeposit_i, weight);
     }
     
     if ( patMuon.isoDeposit(pat::NeutralHadronIso) ) {
       double muonPFNeutralHadronIsoDeposit_i 
 	= patMuon.isoDeposit(pat::NeutralHadronIso)->countWithin(isoConeSize_i, muonParticleFlowIsoParam_, false);
-      hMuonPFNeutralHadronIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonPFNeutralHadronIsoDeposit_i);
+      hMuonPFNeutralHadronIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonPFNeutralHadronIsoDeposit_i, weight);
     }
 
     if ( patMuon.isoDeposit(pat::PhotonIso) ) {
       double muonPFGammaIsoDeposit_i 
 	= patMuon.isoDeposit(pat::PhotonIso)->countWithin(isoConeSize_i, muonParticleFlowIsoParam_, false);
-      hMuonPFGammaIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonPFGammaIsoDeposit_i);
+      hMuonPFGammaIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonPFGammaIsoDeposit_i, weight);
     }
   }
 }

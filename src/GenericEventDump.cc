@@ -546,15 +546,27 @@ void GenericEventDump::printTauInfo(const edm::Event& evt) const
       }
       *outputStream_ << "  trackIsolation (from isolation cone Tracks) = " << sumPtIsolationConeTracks << std::endl;
       *outputStream_ << "  ecalIsolation = " << patTau->tauID("ecalIsolation") << std::endl;
-      //Lack of particle iso geters for pat::lepton in 31X. get them by hand (is set?)
-      //      *outputStream_ << "  pfCandidateIsolation = " << patTau->particleIso() << std::endl;
-      //      *outputStream_ << "  pfChargedHadronIsolation = " << patTau->chargedParticleIso() << std::endl;
-      //      *outputStream_ << "  pfNeutralHadronIsolation = " << patTau->neutralParticleIso() << std::endl;
-      //      *outputStream_ << "  pfGammaIsolation = " << patTau->gammaParticleIso() << std::endl;
-      *outputStream_ << "  pfCandidateIsolation = " << patTau->isolation(pat::ParticleIso) << std::endl;
-      *outputStream_ << "  pfChargedHadronIsolation = " << patTau->isolation(pat::ChargedHadronIso) << std::endl;
-      *outputStream_ << "  pfNeutralHadronIsolation = " << patTau->isolation(pat::NeutralHadronIso) << std::endl;
-      *outputStream_ << "  pfGammaIsolation = " << patTau->isolation(pat::PhotonIso) << std::endl;
+      double sumPtIsolationConePFGammas = 0.;
+      for ( reco::PFCandidateRefVector::const_iterator pfGamma = patTau->isolationPFGammaCands().begin();
+	    pfGamma != patTau->isolationPFGammaCands().end(); ++pfGamma ) {
+	if ( (*pfGamma)->pt() > 1.5 ) sumPtIsolationConePFGammas += (*pfGamma)->pt();
+      }
+      *outputStream_ << "  ecalIsolation (from isolation cone PFGammas) = " << sumPtIsolationConePFGammas << std::endl;
+      *outputStream_ << "  pfCandidateIsolation = " << patTau->particleIso() << std::endl;
+/*
+      edm::Handle<reco::PFCandidateCollection> pfCandidates;
+      evt.getByLabel(pfCandidateSource_, pfCandidates);
+      for ( reco::PFCandidateCollection::const_iterator pfCandidate = pfCandidates->begin();
+            pfCandidate != pfCandidates->end(); ++pfCandidate ) {
+        if ( pfCandidate->pt() > 1.5 && reco::deltaR(patTau->p4(), pfCandidate->p4()) < 1.0 ) {
+          std::cout << "PFCandidate: Pt = " << pfCandidate->pt() << "," 
+                    << " pdgId = " << pfCandidate->translateTypeToPdgId(pfCandidate->particleId()) << std::endl;
+        }
+      }
+ */
+      *outputStream_ << "  pfChargedHadronIsolation = " << patTau->chargedHadronIso() << std::endl;
+      *outputStream_ << "  pfNeutralHadronIsolation = " << patTau->neutralHadronIso() << std::endl;
+      *outputStream_ << "  pfGammaIsolation = " << patTau->photonIso() << std::endl;
       *outputStream_ << " eVeto = " << patTau->tauID("againstElectron") << std::endl;
       *outputStream_ << " EcalStripSumE/P = " << patTau->ecalStripSumEOverPLead() << std::endl;
       *outputStream_ << " BremsRecoveryE/P = " << patTau->bremsRecoveryEOverPLead() << std::endl;

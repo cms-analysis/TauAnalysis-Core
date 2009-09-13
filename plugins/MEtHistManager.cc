@@ -15,6 +15,9 @@ MEtHistManager::MEtHistManager(const edm::ParameterSet& cfg)
 
   metSrc_ = cfg.getParameter<edm::InputTag>("metSource");
   //std::cout << " metSrc = " << metSrc_ << std::endl;
+  
+  metSignificanceSrc_ = cfg.getParameter<edm::InputTag>("metSignificanceSource");
+  //std::cout << " metSignificanceSrc = " << metSignificanceSrc_ << std::endl;
 
   dqmDirectory_store_ = cfg.getParameter<std::string>("dqmDirectory_store");
   //std::cout << " dqmDirectory_store = " << dqmDirectory_store_ << std::endl;
@@ -59,6 +62,8 @@ void MEtHistManager::bookHistograms()
   hRAW_MEtPx_ = dqmStore.book1D("RAW_MEtPx", "RAW_MEtPx", 150, -150., 150.);
   hRAW_MEtPy_ = dqmStore.book1D("RAW_MEtPy", "RAW_MEtPy", 150, -150., 150.);
   
+  hRAW_MEtSignificance_ = dqmStore.book1D("RAW_MEtSignificance", "RAW_MEtSignificance", 101, -0.05, 10.05);
+
   hRAWplusJES_MEtPt_ = dqmStore.book1D("RAWplusJES_MEtPt", "RAWplusJES_MEtPt", 75, 0., 150.);
   hRAWplusJES_MEtPhi_ = dqmStore.book1D("RAWplusJES_MEtPhi", "RAWplusJES_MEtPhi", 36, -TMath::Pi(), +TMath::Pi());
   hRAWplusJES_MEtPx_ = dqmStore.book1D("RAWplusJES_MEtPx", "RAWplusJES_MEtPx", 150, -150., 150.);
@@ -127,6 +132,11 @@ void MEtHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetup
 
   edm::Handle<std::vector<pat::MET> > patMETs;
   evt.getByLabel(metSrc_, patMETs);
+
+  edm::Handle<std::vector<reco::CaloMET> > recoMETs;
+  evt.getByLabel(metSignificanceSrc_, recoMETs);
+  double RAW_MEtSignificance = ( recoMETs->size() == 1 ) ? recoMETs->begin()->metSignificance() : -1.;
+
   if ( patMETs->size() == 1 ) {
     const pat::MET& theEventMET = (*patMETs->begin());
 
@@ -169,6 +179,8 @@ void MEtHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetup
     hRAW_MEtPhi_->Fill(RAW_MEtPhi, evtWeight);
     hRAW_MEtPx_->Fill(RAW_MEtPx, evtWeight);
     hRAW_MEtPy_->Fill(RAW_MEtPy, evtWeight);
+
+    hRAW_MEtSignificance_->Fill(RAW_MEtSignificance, evtWeight);
 
     math::XYZTLorentzVector deltaTAU_MetVector = RAWplusJESplusMUONplusTAU_MetVector - RAWplusJESplusMUON_MetVector;
     math::XYZTLorentzVector deltaJES_MetVector = RAWplusJESplusMUONplusTAU_MetVector - RAWplusMUONplusTAU_MetVector;

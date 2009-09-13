@@ -31,6 +31,7 @@ class MEtHistManager : public HistManagerBase
 
 //--- configuration parameters
   edm::InputTag metSrc_;
+  edm::InputTag metSignificanceSrc_;
 
   std::string dqmDirectory_store_;
 
@@ -51,6 +52,7 @@ class MEtHistManager : public HistManagerBase
   MonitorElement* hRAW_MEtPhi_;
   MonitorElement* hRAW_MEtPx_;
   MonitorElement* hRAW_MEtPy_;
+  MonitorElement* hRAW_MEtSignificance_;
   MonitorElement* hRAWplusJES_MEtPt_;
   MonitorElement* hRAWplusJES_MEtPhi_;
   MonitorElement* hRAWplusJES_MEtPx_;

@@ -5,7 +5,8 @@ metHistManager = cms.PSet(
   pluginType = cms.string('MEtHistManager'),
       
   metSource = cms.InputTag('layer1METs'),
-  metSignificanceSource = cms.InputTag('met'),
+  #metSignificanceSource = cms.InputTag('met'),
+  metSignificanceSource = cms.InputTag('metsignificance'),
 
   dqmDirectory_store = cms.string('MEtQuantities')
 )

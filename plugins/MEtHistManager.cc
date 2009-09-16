@@ -62,7 +62,7 @@ void MEtHistManager::bookHistograms()
   hRAW_MEtPx_ = dqmStore.book1D("RAW_MEtPx", "RAW_MEtPx", 150, -150., 150.);
   hRAW_MEtPy_ = dqmStore.book1D("RAW_MEtPy", "RAW_MEtPy", 150, -150., 150.);
   
-  hRAW_MEtSignificance_ = dqmStore.book1D("RAW_MEtSignificance", "RAW_MEtSignificance", 101, -0.05, 10.05);
+  hRAW_MEtSignificance_ = dqmStore.book1D("RAW_MEtSignificance", "RAW_MEtSignificance", 101, -0.5, 100.05);
 
   hRAWplusJES_MEtPt_ = dqmStore.book1D("RAWplusJES_MEtPt", "RAWplusJES_MEtPt", 75, 0., 150.);
   hRAWplusJES_MEtPhi_ = dqmStore.book1D("RAWplusJES_MEtPhi", "RAWplusJES_MEtPhi", 36, -TMath::Pi(), +TMath::Pi());

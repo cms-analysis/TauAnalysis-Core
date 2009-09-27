@@ -3,6 +3,8 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
+#include "DataFormats/PatCandidates/interface/Tau.h"
+
 #include "TauAnalysis/DQMTools/interface/generalAuxFunctions.h"
 
 #include "TauAnalysis/Core/interface/histManagerAuxFunctions.h"
@@ -14,18 +16,14 @@
 //
 
 PATElecTauPairZeeHypothesisHistManager::PATElecTauPairZeeHypothesisHistManager(const edm::ParameterSet& cfg)
-  : tauJetWeightExtractor_(0),
-    dqmError_(0)
+  : dqmError_(0)
 {
   //std::cout << "<PATElecTauPairZeeHypothesisHistManager::PATElecTauPairZeeHypothesisHistManager>:" << std::endl;
 
   ZeeHypothesisSrc_ = cfg.getParameter<edm::InputTag>("ZeeHypothesisSource");
   //std::cout << " ZeeHypothesisSrc = " << ZeeHypothesis_ << std::endl;
 
-  if ( cfg.exists("tauJetWeightSource") ) {
-    tauJetWeightSrc_ = cfg.getParameter<std::string>("tauJetWeightSource");
-    tauJetWeightExtractor_ = new FakeRateJetWeightExtractor<pat::Tau>(tauJetWeightSrc_);
-  }
+  tauJetWeightExtractors_ = getTauJetWeightExtractors<pat::Tau>(cfg, "tauJetWeightSource");
 
   dqmDirectory_store_ = cfg.getParameter<std::string>("dqmDirectory_store");
   //std::cout << " dqmDirectory_store = " << dqmDirectory_store_ << std::endl;
@@ -36,7 +34,10 @@ PATElecTauPairZeeHypothesisHistManager::PATElecTauPairZeeHypothesisHistManager(c
 
 PATElecTauPairZeeHypothesisHistManager::~PATElecTauPairZeeHypothesisHistManager()
 {
-  delete tauJetWeightExtractor_;
+  for ( std::vector<FakeRateJetWeightExtractor<pat::Tau>*>::iterator it = tauJetWeightExtractors_.begin();
+	it != tauJetWeightExtractors_.end(); ++it ) {
+    delete (*it);
+  }
 }
 
 void PATElecTauPairZeeHypothesisHistManager::bookHistograms()
@@ -90,9 +91,9 @@ void PATElecTauPairZeeHypothesisHistManager::bookHistograms()
   hVisMassFromGsfTracks_ = dqmStore.book1D("VisMassFromGsfTracks", "hypothetic Z^{0} Mass from GSF Tracks", 40, 0., 200.);
 }
 
-double PATElecTauPairZeeHypothesisHistManager::getTauWeight(const PATElecTauPairZeeHypothesis& ZeeHypothesis)
+double PATElecTauPairZeeHypothesisHistManager::getZeeHypothesisWeight(const PATElecTauPairZeeHypothesis& ZeeHypothesis)
 {
-  return ( tauJetWeightExtractor_ ) ? (*tauJetWeightExtractor_)(*ZeeHypothesis.elecTauPair()->leg2()) : 1.;
+  return getTauJetWeight<pat::Tau>(*ZeeHypothesis.elecTauPair()->leg2(), tauJetWeightExtractors_);
 }
 
 void PATElecTauPairZeeHypothesisHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetup& es, double evtWeight)
@@ -110,14 +111,14 @@ void PATElecTauPairZeeHypothesisHistManager::fillHistograms(const edm::Event& ev
   double tauJetWeightSum = 0.;
   for ( PATElecTauPairZeeHypothesisCollection::const_iterator ZeeHypothesis = ZeeHypotheses->begin();
 	ZeeHypothesis != ZeeHypotheses->end(); ++ZeeHypothesis ) {
-    tauJetWeightSum += getTauWeight(*ZeeHypothesis);
+    tauJetWeightSum += getZeeHypothesisWeight(*ZeeHypothesis);
   }
 
   for ( PATElecTauPairZeeHypothesisCollection::const_iterator ZeeHypothesis = ZeeHypotheses->begin();
 	ZeeHypothesis != ZeeHypotheses->end(); ++ZeeHypothesis ) {
-    
-    double weight = ( normMethod_ == kNormEvents ) ? 
-      evtWeight*(getTauWeight(*ZeeHypothesis)/tauJetWeightSum) : getTauWeight(*ZeeHypothesis);
+
+    double tauJetWeight = getZeeHypothesisWeight(*ZeeHypothesis);
+    double weight = ( normMethod_ == kNormEvents ) ? evtWeight*(tauJetWeight/tauJetWeightSum) : tauJetWeight;
 
     hElectron1bestMatchPt_->Fill(ZeeHypothesis->p4Elec1bestMatch().pt(), weight);
     hElectron1bestMatchEta_->Fill(ZeeHypothesis->p4Elec1bestMatch().eta(), weight);

@@ -14,6 +14,9 @@
 #include "AnalysisDataFormats/TauAnalysis/interface/PATElecTauPairZeeHypothesis.h"
 #include "AnalysisDataFormats/TauAnalysis/interface/PATElecTauPairZeeHypothesisFwd.h"
 
+#include <string>
+#include <vector>
+
 class PATElecTauPairZeeHypothesisHistManager : public HistManagerBase 
 {
  public:  
@@ -25,7 +28,7 @@ class PATElecTauPairZeeHypothesisHistManager : public HistManagerBase
 //    inherited from HistManagerBase class
   void bookHistograms();
 
-  double getTauWeight(const PATElecTauPairZeeHypothesis&);
+  double getZeeHypothesisWeight(const PATElecTauPairZeeHypothesis&);
   
   void fillHistograms(const edm::Event&, const edm::EventSetup&, double);
 
@@ -39,7 +42,7 @@ class PATElecTauPairZeeHypothesisHistManager : public HistManagerBase
 //--- "helper" class for accessing weight values
 //    associated to second tau decay products
 //    (efficiency/fake-rate with which the tau-jet passes the tau id. criteria)
-  FakeRateJetWeightExtractor<pat::Tau>* tauJetWeightExtractor_;
+  std::vector<FakeRateJetWeightExtractor<pat::Tau>*> tauJetWeightExtractors_;
 
 //--- histograms
   MonitorElement* hGenElectron1Pt_;

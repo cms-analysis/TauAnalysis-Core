@@ -35,8 +35,6 @@ class PATElecTauPairZeeHypothesisHistManager : public HistManagerBase
 //--- configuration parameters
   edm::InputTag ZeeHypothesisSrc_;
 
-  std::string tauJetWeightSrc_;
-
   std::string dqmDirectory_store_;
 
 //--- "helper" class for accessing weight values

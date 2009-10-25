@@ -3,6 +3,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
+#include "DataFormats/Common/interface/View.h"
 
 #include "TauAnalysis/Core/interface/histManagerAuxFunctions.h"
 
@@ -133,7 +134,7 @@ void MEtHistManager::fillHistograms(const edm::Event& evt, const edm::EventSetup
   edm::Handle<std::vector<pat::MET> > patMETs;
   evt.getByLabel(metSrc_, patMETs);
 
-  edm::Handle<std::vector<reco::CaloMET> > recoMETs;
+  edm::Handle<edm::View<reco::CaloMET> > recoMETs;
   evt.getByLabel(metSignificanceSrc_, recoMETs);
   double RAW_MEtSignificance = ( recoMETs->size() == 1 ) ? recoMETs->begin()->metSignificance() : -1.;
 

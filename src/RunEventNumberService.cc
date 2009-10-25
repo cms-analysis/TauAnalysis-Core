@@ -59,6 +59,9 @@ RunEventNumberService::RunEventNumberService(const edm::ParameterSet& cfg)
       
       for ( vstring::const_iterator filterCondition = saveRunEventNumbers.begin();
 	    filterCondition != saveRunEventNumbers.end(); ++filterCondition ) {
+
+	if ( *filterCondition == "" ) continue;
+
 	bool isMatched = false;
 	checkKeyword(*filterCondition, "passed", isMatched, dqmDirectory_filter,
 		     entry.doSaveRunEventNumbers_passed_, entry.dqmDirectory_passed_);

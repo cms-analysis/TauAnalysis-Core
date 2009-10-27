@@ -6,7 +6,6 @@
 #include "FWCore/ParameterSet/interface/InputTag.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "TauAnalysis/Core/interface/HistManagerBase.h"
-#include "DQMServices/Core/interface/DQMStore.h"
 #include "DQMServices/Core/interface/MonitorElement.h"
 #include "Math/GenVector/VectorUtil.h"
 #include "Math/GenVector/PxPyPzE4D.h"
@@ -26,14 +25,12 @@ class MEtHistManager : public HistManagerBase
  private:
 //--- histogram booking and filling functions 
 //    inherited from HistManagerBase class
-  void bookHistograms();
-  void fillHistograms(const edm::Event&, const edm::EventSetup&, double);
+  void bookHistogramsImp();
+  void fillHistogramsImp(const edm::Event&, const edm::EventSetup&, double);
 
 //--- configuration parameters
   edm::InputTag metSrc_;
   edm::InputTag metSignificanceSrc_;
-
-  std::string dqmDirectory_store_;
 
 //--- histograms
   MonitorElement* hRAWplusJESplusMUONplusTAU_MEtPt_;
@@ -97,8 +94,6 @@ class MEtHistManager : public HistManagerBase
   MonitorElement* hGenMEtDeltaRAWMEt_Py_;
   MonitorElement* hGenMEt_Pt_;
   MonitorElement* hGenMEt_Phi_;
-
-  int dqmError_;
 };
 
 #endif

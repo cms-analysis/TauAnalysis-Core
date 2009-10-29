@@ -141,8 +141,6 @@ void ElectronHistManager::bookHistogramsImp()
   
   hElectronSuperclEnOverTrackMomBarrel_ = book1D("ElectronSuperclEnOverTrackMomBarrel", "Electron (Barrel) #frac{E_{Supercluster}}{P_{Track}}", 50, 0., 5.);
   hElectronSuperclEnOverTrackMomEndcap_ = book1D("ElectronSuperclEnOverTrackMomEndcap", "Electron (Endcap) #frac{E_{Supercluster}}{P_{Track}}", 50, 0., 5.);
-  hElectronSeedClEnOverTrackMomBarrel_ = book1D("ElectronSeedClEnOverTrackMomBarrel", "Electron (Barrel) #frac{E_{Seed-Cluster}}{P_{Track}}", 50, 0., 5.);
-  hElectronSeedClEnOverTrackMomEndcap_ = book1D("ElectronSeedClEnOverTrackMomEndcap", "Electron (Endcap) #frac{E_{Seed-Cluster}}{P_{Track}}", 50, 0., 5.);
   hElectronHadEnOverEmEn_ = book1D("ElectronHadEnOverEmEn", "Electron #frac{E_{had}}{E_{em}}", 102, -0.01, 1.01);
   hElectronSuperclShapeSigmaEtaEta_ = book1D("ElectronSuperclShapeSigmaEtaEta", "Electron #sigma_{#eta#eta}^{Supercluster}", 102, -0.001, 0.101);
   hElectronDeltaPhiSuperclToExtrapolTrack_ = book1D("ElectronDeltaPhiSuperclToExtrapolTrack", "Electron #Delta#phi_{in}", 22, -0.001, 0.021);
@@ -280,14 +278,15 @@ void ElectronHistManager::fillHistogramsImp(const edm::Event& evt, const edm::Ev
 
     if ( TMath::Abs(patElectron->eta()) < electronEtaMaxBarrel_ ) {
       hElectronSuperclEnOverTrackMomBarrel_->Fill(patElectron->eSuperClusterOverP(), weight);
-      hElectronSeedClEnOverTrackMomBarrel_->Fill(patElectron->eSeedClusterOverP(), weight);
+      //hElectronSeedClEnOverTrackMomBarrel_->Fill(patElectron->eSeedClusterOverP(), weight); // CMSSW_3_1_x only
     }
     if ( TMath::Abs(patElectron->eta()) > electronEtaMinEndcap_ ) {
       hElectronSuperclEnOverTrackMomEndcap_->Fill(patElectron->eSuperClusterOverP(), weight);
-      hElectronSeedClEnOverTrackMomEndcap_->Fill(patElectron->eSeedClusterOverP(), weight); 
+      //hElectronSeedClEnOverTrackMomEndcap_->Fill(patElectron->eSeedClusterOverP(), weight); // CMSSW_3_1_x only
     }
-    hElectronHadEnOverEmEn_->Fill(patElectron->hcalOverEcal(), weight); 
-    hElectronSuperclShapeSigmaEtaEta_->Fill(patElectron->sigmaEtaEta(), weight); 
+    //hElectronHadEnOverEmEn_->Fill(patElectron->hcalOverEcal(), weight); // CMSSW_3_1_x
+    hElectronHadEnOverEmEn_->Fill(patElectron->hadronicOverEm(), weight); // CMSSW_2_2_x
+    //hElectronSuperclShapeSigmaEtaEta_->Fill(patElectron->sigmaEtaEta(), weight); // CMSSW_3_1_x only
     hElectronDeltaPhiSuperclToExtrapolTrack_->Fill(patElectron->deltaPhiSuperClusterTrackAtVtx(), weight);
     hElectronDeltaEtaSuperclToExtrapolTrack_->Fill(patElectron->deltaEtaSuperClusterTrackAtVtx(), weight);
     if ( patElectron->gsfTrack().isAvailable() ) {
@@ -378,7 +377,6 @@ void ElectronHistManager::fillElectronIsoHistograms(const pat::Electron& patElec
   hElectronTrkIsoPt_->Fill(patElectron.trackIso(), weight);
   hElectronTrkIsoPtVsElectronPt_->Fill(patElectron.pt(), patElectron.trackIso(), weight);
   hElectronEcalIsoPt_->Fill(patElectron.ecalIso(), weight);
-
   if ( patElectron.superCluster().isAvailable() && patElectron.superCluster().isNonnull() ) {
     if ( TMath::Abs(patElectron.superCluster()->eta()) < electronEtaMaxBarrel_ ) 
       hElectronEcalIsoPtBarrel_->Fill(patElectron.ecalIso(), weight);
@@ -399,22 +397,21 @@ void ElectronHistManager::fillElectronIsoHistograms(const pat::Electron& patElec
       hElectronEcalIsoPtEndcapRel_->Fill(patElectron.ecalIso()/patElectron.pt(), weight);
   }
   hElectronHcalIsoPtRel_->Fill(patElectron.hcalIso()/patElectron.pt(), weight);
-  //hElectronIsoSumPtRel_->Fill((patElectron.trackIso() + patElectron.ecalIso() + patElectron.hcalIso())/patElectron.pt(), weight);
-  hElectronIsoSumPtRel_->Fill((patElectron.trackIso() + patElectron.ecalIso())/patElectron.pt(), weight);
-    
+  hElectronIsoSumPtRel_->Fill((patElectron.trackIso() + patElectron.ecalIso() + patElectron.hcalIso())/patElectron.pt(), weight);
+  
   //std::cout << " particleIso = " << patElectron.particleIso() << std::endl;
-  //std::cout << " chargedHadronIso = " << patElectron.chargedHadronIso() << std::endl;
-  //std::cout << " neutralHadronIso = " << patElectron.neutralHadronIso() << std::endl;
-  //std::cout << " photonIso = " << patElectron.photonIso() << std::endl;
+  //std::cout << " chargedParticleIso = " << patElectron.chargedParticleIso() << std::endl;
+  //std::cout << " neutralParticleIso = " << patElectron.neutralParticleIso() << std::endl;
+  //std::cout << " gammaParticleIso = " << patElectron.gammaParticleIso() << std::endl;
   
   hElectronParticleFlowIsoPt_->Fill(patElectron.particleIso(), weight);
-  hElectronPFChargedHadronIsoPt_->Fill(patElectron.chargedHadronIso(), weight);
-  hElectronPFNeutralHadronIsoPt_->Fill(patElectron.neutralHadronIso(), weight);
-  hElectronPFGammaIsoPt_->Fill(patElectron.photonIso(), weight);
+  hElectronPFChargedHadronIsoPt_->Fill(patElectron.chargedParticleIso(), weight);
+  hElectronPFNeutralHadronIsoPt_->Fill(patElectron.neutralParticleIso(), weight);
+  hElectronPFGammaIsoPt_->Fill(patElectron.gammaParticleIso(), weight);
 
   if ( makeIsoPtCtrlHistograms_ ) {
-    hElectronPFChargedHadronIsoPtCtrl_->Fill(patElectron.trackIso(), patElectron.chargedHadronIso(), weight);
-    hElectronPFGammaIsoPtCtrl_->Fill(patElectron.ecalIso(), patElectron.photonIso(), weight);
+    hElectronPFChargedHadronIsoPtCtrl_->Fill(patElectron.trackIso(), patElectron.chargedParticleIso(), weight);
+    hElectronPFGammaIsoPtCtrl_->Fill(patElectron.ecalIso(), patElectron.gammaParticleIso(), weight);
   } 
 
   fillLeptonIsoDepositHistograms(patElectron.trackerIsoDeposit(), 
@@ -447,21 +444,21 @@ void ElectronHistManager::fillElectronIsoConeSizeDepHistograms(const pat::Electr
       hElectronParticleFlowIsoPtConeSizeDep_[iConeSize - 1]->Fill(electronParticleFlowIsoDeposit_i, weight);
     }
     
-    if ( patElectron.isoDeposit(pat::ChargedHadronIso) ) {
+    if ( patElectron.isoDeposit(pat::ChargedParticleIso) ) {
       double electronPFChargedHadronIsoDeposit_i 
-	= patElectron.isoDeposit(pat::ChargedHadronIso)->countWithin(isoConeSize_i, electronParticleFlowIsoParam_, false);
+	= patElectron.isoDeposit(pat::ChargedParticleIso)->countWithin(isoConeSize_i, electronParticleFlowIsoParam_, false);
       hElectronPFChargedHadronIsoPtConeSizeDep_[iConeSize - 1]->Fill(electronPFChargedHadronIsoDeposit_i, weight);
     }
     
-    if ( patElectron.isoDeposit(pat::NeutralHadronIso) ) {
+    if ( patElectron.isoDeposit(pat::NeutralParticleIso) ) {
       double electronPFNeutralHadronIsoDeposit_i 
-	= patElectron.isoDeposit(pat::NeutralHadronIso)->countWithin(isoConeSize_i, electronParticleFlowIsoParam_, false);
+	= patElectron.isoDeposit(pat::NeutralParticleIso)->countWithin(isoConeSize_i, electronParticleFlowIsoParam_, false);
       hElectronPFNeutralHadronIsoPtConeSizeDep_[iConeSize - 1]->Fill(electronPFNeutralHadronIsoDeposit_i, weight);
     }
 
-    if ( patElectron.isoDeposit(pat::PhotonIso) ) {
+    if ( patElectron.isoDeposit(pat::GammaParticleIso) ) {
       double electronPFGammaIsoDeposit_i 
-	= patElectron.isoDeposit(pat::PhotonIso)->countWithin(isoConeSize_i, electronParticleFlowIsoParam_, false);
+	= patElectron.isoDeposit(pat::GammaParticleIso)->countWithin(isoConeSize_i, electronParticleFlowIsoParam_, false);
       hElectronPFGammaIsoPtConeSizeDep_[iConeSize - 1]->Fill(electronPFGammaIsoDeposit_i, weight);
     }
   }

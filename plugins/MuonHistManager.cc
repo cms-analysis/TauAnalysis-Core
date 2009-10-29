@@ -372,18 +372,18 @@ void MuonHistManager::fillMuonIsoHistograms(const pat::Muon& patMuon, double wei
   hMuonIsoSumPtRel_->Fill((patMuon.trackIso() + patMuon.ecalIso())/patMuon.pt(), weight);
 
   //std::cout << " particleIso = " << patMuon.particleIso() << std::endl;
-  //std::cout << " chargedHadronIso = " << patMuon.chargedHadronIso() << std::endl;
-  //std::cout << " neutralHadronIso = " << patMuon.neutralHadronIso() << std::endl;
-  //std::cout << " photonIso = " << patMuon.photonIso() << std::endl;
+  //std::cout << " chargedParticleIso = " << patMuon.chargedParticleIso() << std::endl;
+  //std::cout << " neutralParticleIso = " << patMuon.neutralParticleIso() << std::endl;
+  //std::cout << " gammaParticleIso = " << patMuon.gammaParticleIso() << std::endl;
   
   hMuonParticleFlowIsoPt_->Fill(patMuon.particleIso(), weight);
-  hMuonPFChargedHadronIsoPt_->Fill(patMuon.chargedHadronIso(), weight);
-  hMuonPFNeutralHadronIsoPt_->Fill(patMuon.neutralHadronIso(), weight);
-  hMuonPFGammaIsoPt_->Fill(patMuon.photonIso(), weight);
+  hMuonPFChargedHadronIsoPt_->Fill(patMuon.chargedParticleIso(), weight);
+  hMuonPFNeutralHadronIsoPt_->Fill(patMuon.neutralParticleIso(), weight);
+  hMuonPFGammaIsoPt_->Fill(patMuon.gammaParticleIso(), weight);
   
   if ( makeIsoPtCtrlHistograms_ ) {
-    hMuonPFChargedHadronIsoPtCtrl_->Fill(patMuon.trackIso(), patMuon.chargedHadronIso(), weight);
-    hMuonPFGammaIsoPtCtrl_->Fill(patMuon.ecalIso(), patMuon.photonIso(), weight);
+    hMuonPFChargedHadronIsoPtCtrl_->Fill(patMuon.trackIso(), patMuon.chargedParticleIso(), weight);
+    hMuonPFGammaIsoPtCtrl_->Fill(patMuon.ecalIso(), patMuon.gammaParticleIso(), weight);
   }
 
   fillLeptonIsoDepositHistograms(patMuon.trackerIsoDeposit(), 
@@ -416,21 +416,21 @@ void MuonHistManager::fillMuonIsoConeSizeDepHistograms(const pat::Muon& patMuon,
       hMuonParticleFlowIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonParticleFlowIsoDeposit_i, weight);
     }
     
-    if ( patMuon.isoDeposit(pat::ChargedHadronIso) ) {
+    if ( patMuon.isoDeposit(pat::ChargedParticleIso) ) {
       double muonPFChargedHadronIsoDeposit_i 
-	= patMuon.isoDeposit(pat::ChargedHadronIso)->countWithin(isoConeSize_i, muonParticleFlowIsoParam_, false);
+	= patMuon.isoDeposit(pat::ChargedParticleIso)->countWithin(isoConeSize_i, muonParticleFlowIsoParam_, false);
       hMuonPFChargedHadronIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonPFChargedHadronIsoDeposit_i, weight);
     }
     
-    if ( patMuon.isoDeposit(pat::NeutralHadronIso) ) {
+    if ( patMuon.isoDeposit(pat::NeutralParticleIso) ) {
       double muonPFNeutralHadronIsoDeposit_i 
-	= patMuon.isoDeposit(pat::NeutralHadronIso)->countWithin(isoConeSize_i, muonParticleFlowIsoParam_, false);
+	= patMuon.isoDeposit(pat::NeutralParticleIso)->countWithin(isoConeSize_i, muonParticleFlowIsoParam_, false);
       hMuonPFNeutralHadronIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonPFNeutralHadronIsoDeposit_i, weight);
     }
 
-    if ( patMuon.isoDeposit(pat::PhotonIso) ) {
+    if ( patMuon.isoDeposit(pat::GammaParticleIso) ) {
       double muonPFGammaIsoDeposit_i 
-	= patMuon.isoDeposit(pat::PhotonIso)->countWithin(isoConeSize_i, muonParticleFlowIsoParam_, false);
+	= patMuon.isoDeposit(pat::GammaParticleIso)->countWithin(isoConeSize_i, muonParticleFlowIsoParam_, false);
       hMuonPFGammaIsoPtConeSizeDep_[iConeSize - 1]->Fill(muonPFGammaIsoDeposit_i, weight);
     }
   }

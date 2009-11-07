@@ -40,8 +40,6 @@ void printEventSelectionInfo(const std::vector<std::pair<std::string, bool> >& f
 //-----------------------------------------------------------------------------------------------------------------------
 //
 
-
-
 void printGenParticleInfo(edm::Handle<edm::View<reco::GenParticle> >& genParticles,
 			  edm::Handle<edm::View<reco::GenJet> >& genTauJets,
 			  std::ostream* stream)
@@ -56,6 +54,10 @@ void printGenParticleInfo(edm::Handle<edm::View<reco::GenParticle> >& genParticl
 	  << " Pt = " << genMissingTransverseMomentum.pt() << "," 
 	  << " phi = " <<  genMissingTransverseMomentum.phi()*180./TMath::Pi() << std::endl;
   *stream << std::endl;
+
+  reco::Particle::LorentzVector genElectronMomentum, genPositronMomentum;
+  reco::Particle::LorentzVector genMuMinusMomentum, genMuPlusMomentum;
+  reco::Particle::LorentzVector genTauMinusMomentum, genTauPlusMomentum;
 
   for ( edm::View<reco::GenParticle>::const_iterator genParticle = genParticles->begin(); 
 	genParticle != genParticles->end(); ++genParticle ) {
@@ -74,6 +76,9 @@ void printGenParticleInfo(edm::Handle<edm::View<reco::GenParticle> >& genParticl
 	      << " Pt = " << genParticleMomentum.pt() << "," 
 	      << " eta = " << genParticleMomentum.eta() << "," 
 	      << " phi = " << genParticleMomentum.phi()*180./TMath::Pi() << std::endl;
+
+      if ( pdgId == +11 ) genElectronMomentum = genParticleMomentum;
+      if ( pdgId == -11 ) genPositronMomentum = genParticleMomentum;
     }
 
     if ( pdgId == -13 || pdgId == +13 ) {
@@ -83,6 +88,9 @@ void printGenParticleInfo(edm::Handle<edm::View<reco::GenParticle> >& genParticl
 	      << " Pt = " << genParticleMomentum.pt() << "," 
 	      << " eta = " << genParticleMomentum.eta() << "," 
 	      << " phi = " << genParticleMomentum.phi()*180./TMath::Pi() << std::endl;
+
+      if ( pdgId == +13 ) genMuMinusMomentum = genParticleMomentum;
+      if ( pdgId == -13 ) genMuPlusMomentum = genParticleMomentum;
     }
 
     if ( pdgId == -15 || pdgId == +15 ) {
@@ -92,6 +100,9 @@ void printGenParticleInfo(edm::Handle<edm::View<reco::GenParticle> >& genParticl
 	      << " Pt = " << genParticleMomentum.pt() << "," 
 	      << " eta = " << genParticleMomentum.eta() << "," 
 	      << " phi = " << genParticleMomentum.phi()*180./TMath::Pi() << std::endl;
+
+      if ( pdgId == +15 ) genTauMinusMomentum = genParticleMomentum;
+      if ( pdgId == -15 ) genTauPlusMomentum = genParticleMomentum;
 
 //--- find genTauJet associated with generated tau 
 //    (match by closest distance in eta-phi)
@@ -147,6 +158,27 @@ void printGenParticleInfo(edm::Handle<edm::View<reco::GenParticle> >& genParticl
       
       *stream << std::endl;
     }
+  }
+
+  reco::Particle::LorentzVector genZllMomentum;
+  if ( genElectronMomentum.pt() > 1. && genPositronMomentum.pt() > 1. ) {
+    std::cout << "dR(electrons) = " << reco::deltaR(genElectronMomentum, genPositronMomentum) << std::endl;
+    genZllMomentum = genElectronMomentum + genPositronMomentum;
+  }
+  if ( genMuMinusMomentum.pt()  > 1. && genMuPlusMomentum.pt() > 1. ) {
+    std::cout << "dR(muons) = " << reco::deltaR(genMuMinusMomentum, genMuPlusMomentum) << std::endl;
+    genZllMomentum = genMuMinusMomentum  + genMuPlusMomentum;
+  }
+  if ( genTauMinusMomentum.pt() > 1. && genTauPlusMomentum.pt() > 1. ) {
+    std::cout << "dR(taus) = " << reco::deltaR(genTauMinusMomentum, genTauPlusMomentum) << std::endl;
+    genZllMomentum = genTauMinusMomentum  + genTauPlusMomentum;
+  }
+  if ( genZllMomentum.energy()  > 1. ) {
+    *stream << "Z:" 
+	    << " Pt = " << genZllMomentum.pt() << "," 
+	    << " eta = " << genZllMomentum.eta() << ","
+	    << " phi = " << genZllMomentum.phi()*180./TMath::Pi() << ","
+	    << " mass = " << genZllMomentum.mass() << std::endl;
   }
 }
 

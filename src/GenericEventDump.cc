@@ -17,6 +17,8 @@
 #include "DataFormats/METReco/interface/GenMET.h"
 #include "DataFormats/METReco/interface/GenMETFwd.h"
 
+#include "DataFormats/MuonReco/interface/MuonSelectors.h"
+
 #include "PhysicsTools/Utilities/interface/deltaR.h"
 
 #include "TauAnalysis/Core/interface/eventDumpAuxFunctions.h"
@@ -473,12 +475,17 @@ void GenericEventDump::printMuonInfo(const edm::Event& evt) const
       *outputStream_ << " theta = " << patMuon->theta()*180./TMath::Pi() 
 		     << " (eta = " << patMuon->eta() << ")" << std::endl;
       *outputStream_ << " phi = " << patMuon->phi()*180./TMath::Pi() << std::endl;
+      *outputStream_ << " isGlobalMuon = " << patMuon->isGlobalMuon() << std::endl;
+      *outputStream_ << " isStandAloneMuon = " << patMuon->isStandAloneMuon() << std::endl;
       *outputStream_ << " inner Track" << std::endl;
       printTrackInfo(edm::RefToBase<reco::Track>(patMuon->innerTrack()), patMuon->vertex(), true, false, outputStream_);
       *outputStream_ << " outer Track" << std::endl;
       printTrackInfo(edm::RefToBase<reco::Track>(patMuon->outerTrack()), patMuon->vertex(), true, false, outputStream_);
       *outputStream_ << " global Track" << std::endl;
       printTrackInfo(edm::RefToBase<reco::Track>(patMuon->globalTrack()), patMuon->vertex(), true, false, outputStream_);
+      *outputStream_ << " caloCompatibility = " << patMuon->caloCompatibility() << std::endl;
+      *outputStream_ << "  isCaloCompatibilityValid = " << patMuon->isCaloCompatibilityValid() << std::endl;
+      *outputStream_ << " segmentCompatibility = " << muon::segmentCompatibility(*patMuon) << std::endl;
       *outputStream_ << " trackIso = " << patMuon->trackIso() << std::endl;
 /*
       if ( recoTrackSource_.label() != "" ) {
@@ -507,6 +514,7 @@ void GenericEventDump::printMuonInfo(const edm::Event& evt) const
       *outputStream_ << " hcalIso = " << patMuon->hcalIso() << std::endl;
       *outputStream_ << " vertex" << std::endl;
       printVertexInfo(patMuon->vertex(), outputStream_);
+      *outputStream_ << " dIP = " << patMuon->track()->dxy(patMuon->vertex()) << std::endl;
       ++iMuon; 
     }
     

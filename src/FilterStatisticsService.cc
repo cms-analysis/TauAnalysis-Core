@@ -133,7 +133,7 @@ void FilterStatisticsService::saveFilterStatisticsElement(DQMStore& dqmStore, co
 //--- create and save MonitorElements holding the number of
 //    unweighted and weighted event counts 
   MonitorElement* meNum = dqmStore.bookInt(std::string(element->name_).append(meNamePrefixNum));
-  meNum->Fill(element->num_);
+  meNum->Fill((int32_t)element->num_);
 
   MonitorElement* meNumWeighted = dqmStore.bookFloat(std::string(element->name_).append(meNamePrefixNumWeighted));
   meNumWeighted->Fill(element->numWeighted_);

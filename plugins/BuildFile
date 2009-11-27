@@ -14,6 +14,7 @@
   <use name=DataFormats/MuonReco>
   <use name=DataFormats/PatCandidates>
   <use name=PhysicsTools/IsolationAlgos>
+  <use name=PhysicsTools/JetMCUtils>
   <use name=PhysicsTools/UtilAlgos>
   <use name=DQMServices/Core>
   <use name=TauAnalysis/DQMTools>

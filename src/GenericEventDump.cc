@@ -22,6 +22,7 @@
 #include "PhysicsTools/Utilities/interface/deltaR.h"
 
 #include "TauAnalysis/Core/interface/eventDumpAuxFunctions.h"
+#include "TauAnalysis/Core/interface/histManagerAuxFunctions.h"
 #include "TauAnalysis/DQMTools/interface/generalAuxFunctions.h"
 
 #include <iostream>
@@ -55,9 +56,14 @@ GenericEventDump::GenericEventDump(const edm::ParameterSet& cfg)
 
   diTauCandidateSource_ = getInputTag(cfg, "diTauCandidateSource");
 
-  patMEtSource_ = getInputTag(cfg, "metSource");
+  patCaloMEtSource_ = getInputTag(cfg, "caloMEtSource");
+  patPFMEtSource_ = getInputTag(cfg, "pfMEtSource");
   genMEtSource_ = getInputTag(cfg, "genMEtSource");
 
+  skipPdgIdsGenParticleMatch_.push_back(12);
+  skipPdgIdsGenParticleMatch_.push_back(14);
+  skipPdgIdsGenParticleMatch_.push_back(16);
+  
   patJetSource_ = getInputTag(cfg, "jetSource");
 
   recoTrackSource_ = getInputTag(cfg, "recoTrackSource");
@@ -415,6 +421,9 @@ void GenericEventDump::printElectronInfo(const edm::Event& evt) const
     edm::Handle<pat::ElectronCollection> patElectrons;
     evt.getByLabel(patElectronSource_, patElectrons);
 
+    edm::Handle<reco::GenParticleCollection> genParticles;
+    evt.getByLabel(genParticleSource_, genParticles);
+
     unsigned iElectron = 0;
     for ( pat::ElectronCollection::const_iterator patElectron = patElectrons->begin(); 
 	  patElectron != patElectrons->end(); ++patElectron ) {
@@ -441,6 +450,8 @@ void GenericEventDump::printElectronInfo(const edm::Event& evt) const
       *outputStream_ << " hcalIso = " << patElectron->hcalIso() << std::endl;
       *outputStream_ << " vertex" << std::endl;
       printVertexInfo(patElectron->vertex(), outputStream_);
+      *outputStream_ << "* matching gen. pdgId = " 
+		     << getMatchingGenParticlePdgId(patElectron->p4(), genParticles, &skipPdgIdsGenParticleMatch_) << std::endl;
       ++iElectron;
     }
     
@@ -466,6 +477,9 @@ void GenericEventDump::printMuonInfo(const edm::Event& evt) const
     //  const reco::Vertex& thePrimaryEventVertex = (*primaryEventVertexCollection->begin());
     //  thePrimaryEventVertexPosition = thePrimaryEventVertex.position();
     //}
+
+    edm::Handle<reco::GenParticleCollection> genParticles;
+    evt.getByLabel(genParticleSource_, genParticles);
 
     unsigned iMuon = 0;
     for ( pat::MuonCollection::const_iterator patMuon = patMuons->begin(); 
@@ -514,7 +528,9 @@ void GenericEventDump::printMuonInfo(const edm::Event& evt) const
       *outputStream_ << " hcalIso = " << patMuon->hcalIso() << std::endl;
       *outputStream_ << " vertex" << std::endl;
       printVertexInfo(patMuon->vertex(), outputStream_);
-      *outputStream_ << " dIP = " << patMuon->track()->dxy(patMuon->vertex()) << std::endl;
+      if ( patMuon->track().isAvailable() ) *outputStream_ << " dIP = " << patMuon->track()->dxy(patMuon->vertex()) << std::endl;
+      *outputStream_ << "* matching gen. pdgId = " 
+		     << getMatchingGenParticlePdgId(patMuon->p4(), genParticles, &skipPdgIdsGenParticleMatch_) << std::endl;
       ++iMuon; 
     }
     
@@ -532,6 +548,9 @@ void GenericEventDump::printTauInfo(const edm::Event& evt) const
   if ( patTauSource_.label() != "" ) {
     edm::Handle<pat::TauCollection> patTaus;
     evt.getByLabel(patTauSource_, patTaus);
+
+    edm::Handle<reco::GenParticleCollection> genParticles;
+    evt.getByLabel(genParticleSource_, genParticles);
 
     unsigned iTau = 0;
     for ( pat::TauCollection::const_iterator patTau = patTaus->begin(); 
@@ -589,6 +608,8 @@ void GenericEventDump::printTauInfo(const edm::Event& evt) const
       *outputStream_ << " muVeto = " << patTau->tauID("againstMuon") << std::endl;
       *outputStream_ << " vertex" << std::endl;
       printVertexInfo(patTau->vertex(), outputStream_);
+      *outputStream_ << "* matching gen. pdgId = " 
+		     << getMatchingGenParticlePdgId(patTau->p4(), genParticles, &skipPdgIdsGenParticleMatch_) << std::endl;
       *outputStream_ << " pat::Tau id. efficiencies:" 
 		     << " byIsolation = " << patTau->efficiency("effByIsolationZtautausim").value() << ","
 		     << " byEcalIsolation = " << patTau->efficiency("effByECALIsolationZtautausim").value() << std::endl;
@@ -644,6 +665,33 @@ void GenericEventDump::printJetInfo(const edm::Event& evt) const
 //-----------------------------------------------------------------------------------------------------------------------
 //
 
+void printMissingEtInfo_i(const edm::Event& evt, const edm::InputTag& src, std::ostream& stream, const char* label)
+{
+  if ( src.label() != "" ) {
+
+    edm::Handle<pat::METCollection> patMETs;
+    evt.getByLabel(src, patMETs);
+    
+    for ( pat::METCollection::const_iterator patMET = patMETs->begin(); 
+	  patMET != patMETs->end(); ++patMET ) {
+      
+      stream << label 
+	     << " Et = " << patMET->pt() << "," 
+	     << " phi = " <<  patMET->phi()*180./TMath::Pi() << std::endl;
+      //stream << " isCaloMET = " << patMET->isCaloMET() << std::endl;
+      //stream << " isPFMET = " << patMET->isPFMET() << std::endl;
+      if ( patMET->genMET() != NULL ) {
+	const reco::GenMET* genMET = patMET->genMET();	
+	stream << " associated genMET:" 
+	       << "  Et = " << genMET->pt() << "," 
+	       << "  phi = " <<  genMET->phi()*180./TMath::Pi() << std::endl;
+      } else {
+	stream << "no genMET associated to PAT MET !!" << std::endl;
+      }
+    }
+  }
+}
+
 void GenericEventDump::printMissingEtInfo(const edm::Event& evt) const
 {
 //--- print-out PAT/reco missing Et information
@@ -653,28 +701,9 @@ void GenericEventDump::printMissingEtInfo(const edm::Event& evt) const
     return;
   }
 
-  if ( patMEtSource_.label() != "" ) {
-    edm::Handle<pat::METCollection> patMETs;
-    evt.getByLabel(patMEtSource_, patMETs);
-
-    for ( pat::METCollection::const_iterator patMET = patMETs->begin(); 
-	  patMET != patMETs->end(); ++patMET ) {
-      
-      *outputStream_ << "PAT MET:" 
-		     << " Et = " << patMET->pt() << "," 
-		     << " phi = " <<  patMET->phi()*180./TMath::Pi() << std::endl;
-      *outputStream_ << " isCaloMET = " << patMET->isCaloMET() << std::endl;      
-      if ( patMET->genMET() != NULL ) {
-	const reco::GenMET* genMET = patMET->genMET();	
-	*outputStream_ << " associated genMET" 
-		       << "  Et = " << genMET->pt() << "," 
-		       << "  phi = " <<  genMET->phi()*180./TMath::Pi() << std::endl;
-      } else {
-	*outputStream_ << "no genMET associated to PAT MET !!" << std::endl;
-      }
-    }
-  }
-
+  printMissingEtInfo_i(evt, patCaloMEtSource_, *outputStream_, "recoCaloMET:");
+  printMissingEtInfo_i(evt, patPFMEtSource_, *outputStream_, "recoPFMET:");
+/*
   if ( genMEtSource_.label() != "" ) {
     edm::Handle<reco::GenMETCollection> genMETs;
     evt.getByLabel(genMEtSource_, genMETs);
@@ -686,7 +715,7 @@ void GenericEventDump::printMissingEtInfo(const edm::Event& evt) const
 		     << " phi = " <<  genMET->phi()*180./TMath::Pi() << std::endl;
     }
   }
-  
+ */  
   *outputStream_ << std::endl;
 }
 

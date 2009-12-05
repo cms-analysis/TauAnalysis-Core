@@ -16,6 +16,8 @@
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/METReco/interface/GenMET.h"
 #include "DataFormats/METReco/interface/GenMETFwd.h"
+#include "DataFormats/JetReco/interface/GenJet.h"
+#include "DataFormats/JetReco/interface/GenJetCollection.h"
 
 #include "DataFormats/MuonReco/interface/MuonSelectors.h"
 
@@ -24,6 +26,7 @@
 #include "TauAnalysis/Core/interface/eventDumpAuxFunctions.h"
 #include "TauAnalysis/Core/interface/histManagerAuxFunctions.h"
 #include "TauAnalysis/DQMTools/interface/generalAuxFunctions.h"
+#include "TauAnalysis/CandidateTools/interface/candidateAuxFunctions.h"
 
 #include <iostream>
 #include <fstream>
@@ -48,6 +51,7 @@ GenericEventDump::GenericEventDump(const edm::ParameterSet& cfg)
     cfg.getParameter<vstring>("hltPathsToPrint") : vstring();
 
   genParticleSource_ = getInputTag(cfg, "genParticleSource");
+  genJetSource_ = getInputTag(cfg, "genJetSource");
   genTauJetSource_ = getInputTag(cfg, "genTauJetSource");
 
   patElectronSource_ = getInputTag(cfg, "electronSource");
@@ -677,14 +681,14 @@ void printMissingEtInfo_i(const edm::Event& evt, const edm::InputTag& src, std::
       
       stream << label 
 	     << " Et = " << patMET->pt() << "," 
-	     << " phi = " <<  patMET->phi()*180./TMath::Pi() << std::endl;
-      //stream << " isCaloMET = " << patMET->isCaloMET() << std::endl;
-      //stream << " isPFMET = " << patMET->isPFMET() << std::endl;
+	     << " phi = " <<  patMET->phi()*180./TMath::Pi() 
+	     << " (Px = " << patMET->px() << ", Py = " << patMET->py() << ")" << std::endl;
       if ( patMET->genMET() != NULL ) {
 	const reco::GenMET* genMET = patMET->genMET();	
 	stream << " associated genMET:" 
 	       << "  Et = " << genMET->pt() << "," 
-	       << "  phi = " <<  genMET->phi()*180./TMath::Pi() << std::endl;
+	       << "  phi = " <<  genMET->phi()*180./TMath::Pi() 
+	       << " (Px = " << genMET->px() << ", Py = " << genMET->py() << ")" << std::endl;
       } else {
 	stream << "no genMET associated to PAT MET !!" << std::endl;
       }
@@ -703,19 +707,50 @@ void GenericEventDump::printMissingEtInfo(const edm::Event& evt) const
 
   printMissingEtInfo_i(evt, patCaloMEtSource_, *outputStream_, "recoCaloMET:");
   printMissingEtInfo_i(evt, patPFMEtSource_, *outputStream_, "recoPFMET:");
-/*
-  if ( genMEtSource_.label() != "" ) {
-    edm::Handle<reco::GenMETCollection> genMETs;
-    evt.getByLabel(genMEtSource_, genMETs);
 
-    for ( reco::GenMETCollection::const_iterator genMET = genMETs->begin(); 
-	  genMET != genMETs->end(); ++genMET ) {
-      *outputStream_ << "genMET (incl. Muons):" 
-		     << " Et = " << genMET->pt() << "," 
-		     << " phi = " <<  genMET->phi()*180./TMath::Pi() << std::endl;
-    }
+  edm::Handle<edm::View<reco::GenParticle> > genParticleCollection;
+  evt.getByLabel(genParticleSource_, genParticleCollection);
+
+  reco::Candidate::LorentzVector genNeutrinos(0,0,0,0);
+
+  for ( edm::View<reco::GenParticle>::const_iterator genParticle = genParticleCollection->begin(); 
+	genParticle != genParticleCollection->end(); ++genParticle ) {
+
+    if ( genParticle->status() == 1 && isNeutrino(&(*genParticle)) )genNeutrinos += genParticle->p4();
   }
- */  
+  
+  *outputStream_ << "sum(gen. Neutrinos):" 
+		 << " Et = " << genNeutrinos.pt() << "," 
+		 << " phi = " <<  genNeutrinos.phi()*180./TMath::Pi() 
+		 << " (Px = " << genNeutrinos.px() << ", Py = " << genNeutrinos.py() << ")" << std::endl;
+
+  reco::Candidate::LorentzVector invisibleHighEtaGenJets(0,0,0,0);
+
+  edm::Handle<reco::GenJetCollection> genJets;
+  evt.getByLabel(genJetSource_, genJets);
+  for ( reco::GenJetCollection::const_iterator genJet = genJets->begin();
+	genJet != genJets->end(); ++genJet ) {
+    if ( TMath::Abs(genJet->eta()) > 5.0 ) invisibleHighEtaGenJets += genJet->p4();
+  }
+
+  *outputStream_ << "sum(gen. Jets @ |eta| > 5.0):" 
+		 << " Et = " << invisibleHighEtaGenJets.pt() << "," 
+		 << " phi = " <<  invisibleHighEtaGenJets.phi()*180./TMath::Pi() 
+		 << " (Px = " << invisibleHighEtaGenJets.px() << ", Py = " << invisibleHighEtaGenJets.py() << ")" << std::endl;
+  
+  reco::Candidate::LorentzVector invisibleHighEtaGenParticles(0,0,0,0);
+  
+  for ( edm::View<reco::GenParticle>::const_iterator genParticle = genParticleCollection->begin(); 
+	genParticle != genParticleCollection->end(); ++genParticle ) {
+
+    if ( genParticle->status() == 1 && TMath::Abs(genParticle->eta()) > 5.0 ) invisibleHighEtaGenParticles += genParticle->p4();
+  }
+
+  *outputStream_ << "sum(gen. Particles @ |eta| > 5.0):" 
+		 << " Et = " << invisibleHighEtaGenParticles.pt() << "," 
+		 << " phi = " <<  invisibleHighEtaGenParticles.phi()*180./TMath::Pi() 
+		 << " (Px = " << invisibleHighEtaGenParticles.px() << ", Py = " << invisibleHighEtaGenParticles.py() << ")" << std::endl;
+
   *outputStream_ << std::endl;
 }
 

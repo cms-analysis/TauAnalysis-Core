@@ -13,7 +13,7 @@
  *
  * \version $Revision: 1.1 $
  *
- * $Id: SysUncertaintyBinning.h,v 1.1 2009/12/04 13:42:00 veelken Exp $
+ * $Id: SysUncertaintyBinning.h,v 1.1 2010/01/07 13:22:06 veelken Exp $
  *
  */
 
@@ -39,8 +39,6 @@ class SysUncertaintyBinning : public BinningBase
 
   void print(std::ostream&) const;
 
-  static const std::string& nameCentralValue() { return nameCentralValue_; }
-
  protected:
   virtual std::vector<std::string> encodeStringRep() const;
   virtual void decodeStringRep(std::vector<std::string>&);
@@ -59,8 +57,6 @@ class SysUncertaintyBinning : public BinningBase
   unsigned numBins_;
 
   void printBinEntries(std::ostream&, const binEntryMapType&) const;
-
-  static std::string nameCentralValue_;
 };
 
 #endif  

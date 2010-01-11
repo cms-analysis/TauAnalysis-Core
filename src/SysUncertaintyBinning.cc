@@ -6,7 +6,9 @@
 #include "TauAnalysis/Core/interface/SysUncertaintyService.h"
 
 #include "TauAnalysis/Core/interface/binningAuxFunctions.h"
+#include "TauAnalysis/Core/interface/sysUncertaintyAuxFunctions.h"
 #include "TauAnalysis/DQMTools/interface/dqmAuxFunctions.h"
+#include "TauAnalysis/DQMTools/interface/generalAuxFunctions.h"
 
 #include <TPRegexp.h>
 #include <TString.h>
@@ -16,8 +18,6 @@
 
 #include <iostream>
 #include <iomanip>
-
-std::string SysUncertaintyBinning::nameCentralValue_ = "CENTRAL_VALUE";
  
 const std::string meOptionsBinContent = std::string(meOptionsSeparator).append("a1").append(meOptionsSeparator).append("s1");
 const std::string meOptionsBinError = std::string(meOptionsSeparator).append("a2").append(meOptionsSeparator).append("s1");
@@ -32,7 +32,15 @@ SysUncertaintyBinning::SysUncertaintyBinning(const edm::ParameterSet& cfg)
 {
   //std::cout << "<SysUncertaintyBinning::SysUncertaintyBinning>:" << std::endl;
 
-  systematics_ = cfg.getParameter<vstring>("systematics");
+  vstring cfgSystematics = cfg.getParameter<vstring>("systematics");
+  for ( vstring::const_iterator sysName = cfgSystematics.begin();
+	sysName != cfgSystematics.end(); ++sysName ) {
+    vstring sysNames_expanded = expandSysName(*sysName);
+    systematics_.insert(systematics_.end(), sysNames_expanded.begin(), sysNames_expanded.end());
+  }
+
+  systematics_.insert(systematics_.begin(), SysUncertaintyService::getNameCentralValue());
+  //std::cout << " systematics = " << format_vstring(systematics_) << std::endl;
 
   numBins_ = binGrid_->numBins();
   //std::cout << "numBins = " << numBins_ << std::endl;
@@ -147,7 +155,7 @@ void SysUncertaintyBinning::printBinEntries(std::ostream& stream, const binEntry
 {
 //--- get central value (no systematic shifts/reweights applied)
 //    as reference with respect to which effect of systematic shifts/reweights get computed
-  std::map<std::string, binEntryType>::const_iterator binEntry_central = binEntries.find(nameCentralValue_);
+  std::map<std::string, binEntryType>::const_iterator binEntry_central = binEntries.find(SysUncertaintyService::getNameCentralValue());
   if ( binEntry_central == binEntries.end() ) {
     edm::LogError ("printBinEntries") << " No binning results defined for central value !!";
     return;
@@ -155,32 +163,35 @@ void SysUncertaintyBinning::printBinEntries(std::ostream& stream, const binEntry
 
   double binCentralValue = binEntry_central->second.binContent_;
 
-  stream << "central value:"
+  stream << "  central value:"
 	 << " " << std::setprecision(3) << std::fixed << binCentralValue
 	 << " +/- " << std::setprecision(3) << std::fixed << TMath::Sqrt(binEntry_central->second.binSumw2_) << " (stat.)" << std::endl;
-  stream << "systematic uncertainties:" << std::endl;
+  stream << "  systematic uncertainties:" << std::endl;
   
-  TPRegexp regexpParser_bidirectional_entry("[[:alnum:]]+Up|Down");
-  TPRegexp regexpParser_bidirectional_name("([[:alnum:]]+)Up|Down");
-  TPRegexp regexpParser_array_entry("[[:alnum:]]+\\[[[:digit:]]+\\]");
-  TPRegexp regexpParser_array_name("([[:alnum:]]+)\\[[[:digit:]]+\\]");
+  TPRegexp regexpParser_bidirectional_entry("[[:alnum:]]+(Up|Down)");
+  TPRegexp regexpParser_bidirectional_name("([[:alnum:]]+)(Up|Down)");
+  TPRegexp regexpParser_array_entry("[[:alnum:]]+\\([[:digit:]]+\\)");
+  TPRegexp regexpParser_array_name("([[:alnum:]]+)\\([[:digit:]]+\\)");
   
   vstring sysNames_skip;
 
   for ( vstring::const_iterator sysName = systematics_.begin();
 	sysName != systematics_.end(); ++sysName ) {
+
+    if ( (*sysName) == SysUncertaintyService::getNameCentralValue() ) continue;
+
     TString sysName_tstring = sysName->data();
     
     bool parseError = false;
     
-    if ( regexpParser_bidirectional_entry.Match(sysName_tstring) == 1 ) {
+    if ( regexpParser_bidirectional_entry.Match(sysName_tstring) >= 1 ) {
       TObjArray* subStrings = regexpParser_bidirectional_name.MatchS(sysName_tstring);
       
-      if ( subStrings->GetEntries() == 2 ) {
+      if ( subStrings->GetEntries() == 3 ) {
 	std::string sysName_bidirectional = ((TObjString*)subStrings->At(1))->GetString().Data();
-	
+
 	if ( containsSysName(sysNames_skip, sysName_bidirectional) ) continue;
-	
+
 	std::string sysName_up = std::string(sysName_bidirectional).append("Up");
 	std::map<std::string, binEntryType>::const_iterator binEntry_up = binEntries.find(sysName_up);
 	if ( binEntry_up == binEntries.end() ) {
@@ -200,8 +211,8 @@ void SysUncertaintyBinning::printBinEntries(std::ostream& stream, const binEntry
 	double sysShift_down = ( binCentralValue ) ? (binShiftedValue_down - binCentralValue)/binCentralValue : 0;
 	
 	stream << " " << std::setw(20) << sysName_bidirectional << ":"
-	       << " up = " << std::setprecision(3) << std::fixed << sysShift_up << ","
-	       << " down = " << std::setprecision(3) << std::fixed << sysShift_down << std::endl;
+	       << " up = " << std::setprecision(3) << std::fixed << sysShift_up*100. << "%,"
+	       << " down = " << std::setprecision(3) << std::fixed << sysShift_down*100. << "%" << std::endl;
 	
 	sysNames_skip.push_back(sysName_bidirectional);
       } else {
@@ -217,7 +228,7 @@ void SysUncertaintyBinning::printBinEntries(std::ostream& stream, const binEntry
 	
 	double sysShiftsSum2 = 0.;
 	
-	TPRegexp regexpParser_element_entry(std::string(sysName_array).append("\\[[[:digit:]]+\\]").data());
+	TPRegexp regexpParser_element_entry(std::string(sysName_array).append("\\([[:digit:]]+\\)").data());
 	
 	for ( vstring::const_iterator sysName_element = sysName;
 	      sysName_element != systematics_.end(); ++sysName_element ) {	  
@@ -235,7 +246,7 @@ void SysUncertaintyBinning::printBinEntries(std::ostream& stream, const binEntry
 	}
 	
 	stream << " " << std::setw(20) << sysName_array << ":"
-	       << " " << std::setprecision(3) << std::fixed << TMath::Sqrt(sysShiftsSum2) << std::endl;
+	       << " " << std::setprecision(3) << std::fixed << TMath::Sqrt(sysShiftsSum2)*100. << "%" << std::endl;
 	
 	sysNames_skip.push_back(sysName_array);
       } else {
@@ -251,7 +262,7 @@ void SysUncertaintyBinning::printBinEntries(std::ostream& stream, const binEntry
       double sysShift = ( binCentralValue ) ? (binShiftedValue - binCentralValue)/binCentralValue : 0;
       
       stream << " " << std::setw(20) << (*sysName) << ":"
-	     << " " << std::setprecision(3) << std::fixed << sysShift << std::endl;
+	     << " " << std::setprecision(3) << std::fixed << sysShift*100. << "%" << std::endl;
     }
     
     if ( parseError ) {

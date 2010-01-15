@@ -11,13 +11,14 @@
  * 
  * \author Christian Veelken, UC Davis
  *
- * \version $Revision: 1.1 $
+ * \version $Revision: 1.2 $
  *
- * $Id: SysUncertaintyBinning.h,v 1.1 2010/01/07 13:22:06 veelken Exp $
+ * $Id: SysUncertaintyBinning.h,v 1.2 2010/01/11 10:13:12 veelken Exp $
  *
  */
 
 #include "TauAnalysis/Core/interface/BinningBase.h"
+#include "TauAnalysis/Core/interface/binningAuxFunctions.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
@@ -45,12 +46,6 @@ class SysUncertaintyBinning : public BinningBase
 
   typedef std::vector<std::string> vstring;
   vstring systematics_;
-
-  struct binEntryType
-  {
-    double binContent_;
-    double binSumw2_;
-  };
 
   typedef std::map<std::string, binEntryType> binEntryMapType;
   std::vector<binEntryMapType> binEntries_;

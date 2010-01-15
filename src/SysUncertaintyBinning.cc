@@ -50,10 +50,7 @@ SysUncertaintyBinning::SysUncertaintyBinning(const edm::ParameterSet& cfg)
 
     for ( vstring::const_iterator sysName = systematics_.begin();
 	  sysName != systematics_.end(); ++sysName ) {
-      binEntryType& binEntry = binEntryMap[*sysName];
-
-      binEntry.binContent_ = 0.;
-      binEntry.binSumw2_ = 0.;
+      binEntryMap.insert(std::pair<std::string, binEntryType>(*sysName, binEntryType()));
     }
 
     binEntries_.push_back(binEntryMap);

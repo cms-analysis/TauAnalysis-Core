@@ -93,26 +93,28 @@ void SysUncertaintyBinning::print(std::ostream& stream) const
   stream << "<SysUncertaintyBinning::print>:" << std::endl;
   stream << " name = " << name_ << std::endl;
   
-  const std::vector<std::string>& objVarNames = binGrid_->objVarNames();
-  
-  for ( unsigned iBin = 0; iBin < numBins_; ++iBin ) {
-    stream << " bin " << std::setw(2) << iBin << " (center: ";
-
-    std::vector<double> binCenter = binGrid_->binCenter(iBin);
-    if ( binCenter.size() != objVarNames.size() ) {
-      edm::LogError ("SysUncertaintyBinning::print") << "Invalid dimension of bin-center vector !!";
-      return;
+  if ( numBins_ >= 1 ) {
+    const std::vector<std::string>& objVarNames = binGrid_->objVarNames();
+    
+    for ( unsigned iBin = 0; iBin < numBins_; ++iBin ) {
+      stream << " bin " << std::setw(2) << iBin << " (center: ";
+      
+      std::vector<double> binCenter = binGrid_->binCenter(iBin);
+      if ( binCenter.size() != objVarNames.size() ) {
+	edm::LogError ("SysUncertaintyBinning::print") << "Invalid dimension of bin-center vector !!";
+	return;
+      }
+      
+      unsigned numObjVarNames = objVarNames.size();
+      for ( unsigned iObjVar = 0; iObjVar < numObjVarNames; ++iObjVar ) {
+	stream << objVarNames[iObjVar] << " = " << std::setprecision(3) << std::fixed << binCenter[iObjVar];
+	if ( iObjVar < (numObjVarNames - 1) ) stream << ", ";
+      }
+      
+      stream << "): " << std::endl;
+      
+      printBinEntries(stream, binEntries_[iBin]);
     }
-
-    unsigned numObjVarNames = objVarNames.size();
-    for ( unsigned iObjVar = 0; iObjVar < numObjVarNames; ++iObjVar ) {
-      stream << objVarNames[iObjVar] << " = " << std::setprecision(3) << std::fixed << binCenter[iObjVar];
-      if ( iObjVar < (numObjVarNames - 1) ) stream << ", ";
-    }
-
-    stream << "): " << std::endl;
-
-    printBinEntries(stream, binEntries_[iBin]);
   }
 
   binEntryMapType binEntries_sum;  
@@ -134,7 +136,7 @@ void SysUncertaintyBinning::print(std::ostream& stream) const
   }
   
   stream << " sum:" << std::endl;
-
+  
   printBinEntries(stream, binEntries_sum);
 }
 

@@ -93,7 +93,7 @@ void SysUncertaintyBinning::print(std::ostream& stream) const
   stream << "<SysUncertaintyBinning::print>:" << std::endl;
   stream << " name = " << name_ << std::endl;
   
-  if ( numBins_ >= 1 ) {
+  if ( numBins_ > 1 ) {
     const std::vector<std::string>& objVarNames = binGrid_->objVarNames();
     
     for ( unsigned iBin = 0; iBin < numBins_; ++iBin ) {
@@ -176,6 +176,7 @@ void SysUncertaintyBinning::printBinEntries(std::ostream& stream, const binEntry
 
   for ( vstring::const_iterator sysName = systematics_.begin();
 	sysName != systematics_.end(); ++sysName ) {
+    //std::cout << "sysName = " << (*sysName) << std::endl;
 
     if ( (*sysName) == SysUncertaintyService::getNameCentralValue() ) continue;
 
@@ -191,6 +192,8 @@ void SysUncertaintyBinning::printBinEntries(std::ostream& stream, const binEntry
 
 	if ( containsSysName(sysNames_skip, sysName_bidirectional) ) continue;
 
+	//std::cout << "binCentralValue = " << binCentralValue << std::endl;
+
 	std::string sysName_up = std::string(sysName_bidirectional).append("Up");
 	std::map<std::string, binEntryType>::const_iterator binEntry_up = binEntries.find(sysName_up);
 	if ( binEntry_up == binEntries.end() ) {
@@ -198,8 +201,10 @@ void SysUncertaintyBinning::printBinEntries(std::ostream& stream, const binEntry
 	  return;
 	}
 	double binShiftedValue_up = binEntry_up->second.binContent_;
+	//std::cout << "binShiftedValue_up = " << binShiftedValue_up << std::endl;
 	double sysShift_up = ( binCentralValue ) ? (binShiftedValue_up - binCentralValue)/binCentralValue : 0;
-	
+	//std::cout << "sysShift_up = " << sysShift_up << std::endl;
+
 	std::string sysName_down = std::string(sysName_bidirectional).append("Down");
 	std::map<std::string, binEntryType>::const_iterator binEntry_down = binEntries.find(sysName_down);
 	if ( binEntry_down == binEntries.end() ) {
@@ -207,7 +212,9 @@ void SysUncertaintyBinning::printBinEntries(std::ostream& stream, const binEntry
 	  continue;
 	}
 	double binShiftedValue_down = binEntry_down->second.binContent_;
+	//std::cout << "binShiftedValue_down = " << binShiftedValue_down << std::endl;
 	double sysShift_down = ( binCentralValue ) ? (binShiftedValue_down - binCentralValue)/binCentralValue : 0;
+	//std::cout << "sysShift_down = " << sysShift_down << std::endl;
 	
 	stream << " " << std::setw(20) << sysName_bidirectional << ":"
 	       << " up = " << std::setprecision(3) << std::fixed << sysShift_up*100. << "%,"
@@ -225,6 +232,8 @@ void SysUncertaintyBinning::printBinEntries(std::ostream& stream, const binEntry
 	
 	if ( containsSysName(sysNames_skip, sysName_array) ) continue;
 	
+	//std::cout << "binCentralValue = " << binCentralValue << std::endl;
+
 	double sysShiftsSum2 = 0.;
 	
 	TPRegexp regexpParser_element_entry(std::string(sysName_array).append("\\([[:digit:]]+\\)").data());
@@ -238,7 +247,9 @@ void SysUncertaintyBinning::printBinEntries(std::ostream& stream, const binEntry
 	      continue;
 	    }
 	    double binShiftedValue_element = binEntry_element->second.binContent_;
+	    //std::cout << "binShiftedValue_element = " << binShiftedValue_element << std::endl;
 	    double sysShift_element = ( binCentralValue ) ? (binShiftedValue_element - binCentralValue)/binCentralValue : 0;
+            //std::cout << "sysShift_element = " << sysShift_element << std::endl;
 	    
 	    sysShiftsSum2 += (sysShift_element*sysShift_element);
 	  }

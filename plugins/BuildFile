@@ -16,6 +16,7 @@
   <use name=PhysicsTools/IsolationAlgos>
   <use name=PhysicsTools/JetMCUtils>
   <use name=PhysicsTools/UtilAlgos>
+  <use name=CommonTools/UtilAlgos>
   <use name=DQMServices/Core>
   <use name=TauAnalysis/CandidateTools>
   <use name=TauAnalysis/Core>

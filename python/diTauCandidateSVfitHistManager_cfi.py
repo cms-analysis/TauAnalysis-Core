@@ -11,6 +11,18 @@ diTauCandidateSVfitHistManager = cms.PSet(
 
     dqmDirectory_store = cms.string('DiTauCandidateSVfitQuantities'),
 
+    SVfitAlgorithms = cms.VPSet(
+        cms.PSet(
+            name = cms.string("psKine")
+        ),
+        cms.PSet(
+            name = cms.string("psKine_MEt")
+        ),
+        cms.PSet(
+            name = cms.string("psKine_MEt_ptBalance")
+        )
+    ),
+
     #requireGenMatch = cms.bool(True),
     requireGenMatch = cms.bool(False),
 

@@ -14,11 +14,14 @@
 
 #include "TauAnalysis/Core/interface/histManagerAuxFunctions.h"
 #include "TauAnalysis/CandidateTools/interface/candidateAuxFunctions.h"
+#include "TauAnalysis/DQMTools/interface/dqmAuxFunctions.h"
 
 #include <TMath.h>
 #include <TFile.h>
 
 const double epsilon = 0.01;
+
+using namespace svFitHistogramManager_namespace;
 
 template<typename T1, typename T2>
 bool matchesGenCandidatePair(const CompositePtrCandidateT1T2MEt<T1,T2>& compositePtrCandidate)
@@ -26,6 +29,88 @@ bool matchesGenCandidatePair(const CompositePtrCandidateT1T2MEt<T1,T2>& composit
   bool isGenMatched = false;
 // not implemented yet...
   return isGenMatched;
+}
+
+//
+//-----------------------------------------------------------------------------------------------------------------------
+//
+
+svFitHistManagerType::svFitHistManagerType(const edm::ParameterSet& cfg)
+  : HistManagerBase(cfg)
+{
+  algorithmName_ = cfg.getParameter<std::string>("algorithmName");    
+  polarizationHypothesis_ = cfg.exists("polarizationHypothesis") ? 
+    cfg.getParameter<std::string>("polarizationHypothesis") : "Unknown";
+  
+  dqmDirectory_store_ = cfg.getParameter<std::string>("dqmDirectory_store");
+  dqmDirectory_store_ = dqmDirectoryName(dqmDirectory_store_).append(algorithmName_);
+  if ( polarizationHypothesis_ != "Unknown" ) 
+    dqmDirectory_store_ = dqmDirectoryName(dqmDirectory_store_).append(polarizationHypothesis_);
+}
+
+void svFitHistManagerType::bookHistogramsImp()
+{
+  hX1_ = book1D("X1", "X_{1}", 51, -0.01, 1.01);
+  hX2_ = book1D("X2", "X_{2}", 51, -0.01, 1.01);
+/*
+  hX1vsGenX1_ = book2D("X1vsGenX1", "X_{1} vs. gen. X_{1}", 21, -0.01, 1.01, 100, -2.5, +2.5);
+  hX1vsGenX1Profile_ = bookProfile1D("X1vsGenX1Profile", "X_{1} vs. gen. X_{1}", 51, -0.01, 1.01);
+  hX2vsGenX2_ = book2D("X2vsGenX2", "X_{2} vs. gen. X_{2}", 21, -0.01, 1.01, 100, -2.5, +2.5);
+  hX2vsGenX2Profile_ = bookProfile1D("X2vsGenX2Profile", "X_{2} vs. gen. X_{2}", 51, -0.01, 1.01);
+ */
+  hMass_ = book1D("Mass", " Mass", 50, 0., 250.);
+  hGenLeg1RecLeg2Mass_ = book1D("GenLeg1RecLeg2Mass", "gen. leg_{1} + rec. leg_{2} Invariant Mass", 50, 0., 250.);
+  hRecLeg1GenLeg2Mass_ = book1D("RecLeg1GenLeg2Mass", "rec. leg_{1} + gen. leg_{2} Invariant Mass", 50, 0., 250.);
+
+  hMassVsLogLikelihood_ = book2D("MassVsLogLikelihood", "SVfit Mass vs. log-Likelihood", 50, 0., 250., 20, -35., 25.);
+
+  hLogLikelihood_ = book1D("LogLikelihood", "SVfit log-Likelihood", 100, -50., 50.);
+
+  hDecayTimeLeg1_ = book1D("DecayTimeLeg1", "SVfit leg_{1} Decay eigentime", 100, 0., 1000.);
+  hDecayTimeLeg2_ = book1D("DecayTimeLeg2", "SVfit leg_{2} Decay eigentime", 100, 0., 1000.);
+
+  hSVfitStatus_ = book1D("SVfitStatus", "SVfit Status", 10, -2.5, 7.5);
+}
+
+template<typename T1, typename T2>
+void svFitHistManagerType::customFillHistograms(const CompositePtrCandidateT1T2MEt<T1,T2>& diTauCandidate, double weight)
+{
+  const SVfitDiTauSolution* svFitSolution = diTauCandidate.svFitSolution(algorithmName_, polarizationHypothesis_);
+  
+  if ( !svFitSolution ) {
+    edm::LogError("<svFitHistManagerType::customFillHistograms>")
+      << " No SVfitDiTauSolution object reconstructed for algorithm = " << algorithmName_ << "," 
+      << " polarizaton hypothesis = " << polarizationHypothesis_ << " --> histograms will NOT be filled !!";
+    return;
+  }
+  
+  if ( svFitSolution->isValidSolution() ) {
+    hX1_->Fill(svFitSolution->leg1().x(), weight);
+    hX2_->Fill(svFitSolution->leg2().x(), weight);
+/*
+    if ( diTauCandidate->p4Leg1gen().energy() > epsilon && 
+      diTauCandidate->p4Leg2gen().energy() > epsilon ) {
+      hX1vsGenX1_->Fill(diTauCandidate->x1gen(), svFitSolution->leg1().x(), weight);
+      hX1vsGenX1Profile_->getTProfile()->Fill(diTauCandidate->x1gen(), svFitSolution->leg1().x(), weight);
+      hX2vsGenX2_->Fill(diTauCandidate->x2gen(), svFitSolution->leg2().x(), weight);
+      hX2vsGenX2Profile_->getTProfile()->Fill(diTauCandidate->x2gen(), svFitSolution->leg2().x(), weight);
+    }
+ */	
+    hMass_->Fill(svFitSolution->p4().mass(), weight);
+    hGenLeg1RecLeg2Mass_->Fill((diTauCandidate.p4Leg1gen() + svFitSolution->leg2().p4()).mass(), weight);
+    hRecLeg1GenLeg2Mass_->Fill((svFitSolution->leg1().p4() + diTauCandidate.p4Leg2gen()).mass(), weight);
+
+    hMassVsLogLikelihood_->Fill(svFitSolution->p4().mass(), svFitSolution->logLikelihood(), weight);
+
+    hLogLikelihood_->Fill(svFitSolution->logLikelihood(), weight);
+
+    hDecayTimeLeg1_->Fill(compDecayEigenTime(svFitSolution->leg1().decayVertexPos(),
+					     svFitSolution->eventVertexPosSVrefitted(), svFitSolution->leg1().p4().energy()), weight);
+    hDecayTimeLeg2_->Fill(compDecayEigenTime(svFitSolution->leg2().decayVertexPos(), 
+					     svFitSolution->eventVertexPosSVrefitted(), svFitSolution->leg2().p4().energy()), weight);
+  }
+    
+  hSVfitStatus_->Fill(svFitSolution->minuitStatus(), weight);
 }
 
 //
@@ -49,6 +134,32 @@ CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::CompositePtrCandidateT1T2ME
 
   std::string normalization_string = cfg.getParameter<std::string>("normalization");
   normMethod_ = getNormMethod(normalization_string, "diTauCandidates");
+
+  std::string dqmDirectory_store = cfg.getParameter<std::string>("dqmDirectory_store");
+
+  typedef std::vector<edm::ParameterSet> vParameterSet;
+  vParameterSet cfgSVfitAlgorithms = cfg.getParameter<vParameterSet>("SVfitAlgorithms");
+  for ( vParameterSet::const_iterator cfgSVfitAlgorithm = cfgSVfitAlgorithms.begin();
+	cfgSVfitAlgorithm != cfgSVfitAlgorithms.end(); ++cfgSVfitAlgorithm ) {
+    std::string name = cfgSVfitAlgorithm->getParameter<std::string>("name");
+    if ( cfgSVfitAlgorithm->exists("polarizationHypotheses") ) {
+      typedef std::vector<std::string> vstring;
+      vstring polarizationHypotheses = cfgSVfitAlgorithm->getParameter<vstring>("polarizationHypotheses");
+      for ( vstring::const_iterator polarizationHypothesis = polarizationHypotheses.begin();
+	    polarizationHypothesis != polarizationHypotheses.end(); ++polarizationHypothesis ) {
+	edm::ParameterSet cfgSVfitAlgorithm_customized = (*cfgSVfitAlgorithm);
+	cfgSVfitAlgorithm_customized.addParameter<std::string>("svFitAlgorithmName", name);
+	cfgSVfitAlgorithm_customized.addParameter<std::string>("polarizationHypothesis", *polarizationHypothesis);
+	cfgSVfitAlgorithm_customized.addParameter<std::string>("dqmDirectory_store", dqmDirectory_store);
+	svFitAlgorithmHistManagers_.push_back(new svFitHistManagerType(cfgSVfitAlgorithm_customized));
+      }
+    } else {
+      edm::ParameterSet cfgSVfitAlgorithm_customized = (*cfgSVfitAlgorithm);
+      cfgSVfitAlgorithm_customized.addParameter<std::string>("svFitAlgorithmName", name);
+      cfgSVfitAlgorithm_customized.addParameter<std::string>("dqmDirectory_store", dqmDirectory_store);
+      svFitAlgorithmHistManagers_.push_back(new svFitHistManagerType(cfgSVfitAlgorithm_customized));
+    }
+  }
 }
 
 template<typename T1, typename T2>
@@ -63,6 +174,11 @@ CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::~CompositePtrCandidateT1T2M
 	it != diTauLeg2WeightExtractors_.end(); ++it ) {
     delete (*it);
   }
+
+  for ( std::vector<svFitHistManagerType*>::iterator it = svFitAlgorithmHistManagers_.begin();
+	it != svFitAlgorithmHistManagers_.end(); ++it ) {
+    delete (*it);
+  }
 }
 
 template<typename T1, typename T2>
@@ -70,43 +186,10 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::bookHistogramsImp()
 {
   //std::cout << "<CompositePtrCandidateT1T2MEtSVfitHistManager::bookHistogramsImp>:" << std::endl;
 
-  hX1_ = book1D("X1", "X_{1}", 51, -0.01, 1.01);
-  hX2_ = book1D("X2", "X_{2}", 51, -0.01, 1.01);
-/*
-  hX1vsGenX1_ = book2D("X1vsGenX1", "X_{1} vs. gen. X_{1}", 21, -0.01, 1.01, 100, -2.5, +2.5);
-  hX1vsGenX1Profile_ = bookProfile1D("X1vsGenX1Profile", "X_{1} vs. gen. X_{1}", 51, -0.01, 1.01);
-  hX2vsGenX2_ = book2D("X2vsGenX2", "X_{2} vs. gen. X_{2}", 21, -0.01, 1.01, 100, -2.5, +2.5);
-  hX2vsGenX2Profile_ = bookProfile1D("X2vsGenX2Profile", "X_{2} vs. gen. X_{2}", 51, -0.01, 1.01);
- */
-  hMass_ = book1D("Mass", " Mass", 50, 0., 250.);
-  hMass1stSolution_ = book1D("Mass1stSolution", "SVfit Mass (1st Solution)", 50, 0., 250.);
-  hGenLeg1RecLeg2Mass1stSolution_ = book1D("GenLeg1RecLeg2Mass1stSolution", 
-					   "gen. leg_{1} + rec. leg_{2} Invariant Mass (1st Solution)", 50, 0., 250.);
-  hRecLeg1GenLeg2Mass1stSolution_ = book1D("RecLeg1GenLeg2Mass1stSolution", 
-					   "rec. leg_{1} + gen. leg_{2} Invariant Mass (1st Solution)", 50, 0., 250.);
-  hMass2ndSolution_ = book1D("Mass2ndSolution", "SVfit  Mass (2nd Solution)", 50, 0., 250.);
-  hGenLeg1RecLeg2Mass2ndSolution_ = book1D("GenLeg1RecLeg2Mass2ndSolution", 
-					   "gen. leg_{1} + rec. leg_{2} Invariant Mass (2nd Solution)", 50, 0., 250.);
-  hRecLeg1GenLeg2Mass2ndSolution_ = book1D("RecLeg1GenLeg2Mass2ndSolution", 
-					   "rec. leg_{1} + gen. leg_{2} Invariant Mass (2nd Solution)", 50, 0., 250.);
-  hMass3rdSolution_ = book1D("Mass3rdSolution", "SVfit  Mass (3rd Solution)", 50, 0., 250.);
-  hGenLeg1RecLeg2Mass3rdSolution_ = book1D("GenLeg1RecLeg2Mass3rdSolution", 
-					   "gen. leg_{1} + rec. leg_{2} Invariant Mass (3rd Solution)", 50, 0., 250.);
-  hRecLeg1GenLeg2Mass3rdSolution_ = book1D("RecLeg1GenLeg2Mass3rdSolution", 
-					   "rec. leg_{1} + gen. leg_{2} Invariant Mass (3rd Solution)", 50, 0., 250.);
-  hMass4thSolution_ = book1D("Mass4thSolution", "SVfit  Mass (4th Solution)", 50, 0., 250.);  
-  hGenLeg1RecLeg2Mass4thSolution_ = book1D("GenLeg1RecLeg2Mass4thSolution", 
-					   "gen. leg_{1} + rec. leg_{2} Invariant Mass (4th Solution)", 50, 0., 250.);
-  hRecLeg1GenLeg2Mass4thSolution_ = book1D("RecLeg1GenLeg2Mass4thSolution", 
-					   "rec. leg_{1} + gen. leg_{2} Invariant Mass (4th Solution)", 50, 0., 250.);
-  hMassBestMatch_ = book1D("MassBestMatch", "SVfit  Mass best matching gen. Mass", 50, 0., 250.);
-  hMassAverage_ = book1D("MassAverage", "SVfit  Mass (Average of valid Solutions)", 50, 0., 250.);
-  hMassNumSolutionsAveraged_ = book1D("MassNumSolutionsAveraged", "SVfit Num. Mass Solutions incl. in Average", 5, -0.5, 4.5);
-  hMassVsLogLikelihood_ = book2D("MassVsLogLikelihood", "SVfit Mass vs. log-Likelihood", 50, 0., 250., 20, -35., 25.);
-  hLogLikelihood_ = book1D("LogLikelihood", "SVfit log-Likelihood", 100, -50., 50.);
-  hDecayTimeLeg1_ = book1D("DecayTimeLeg1", "SVfit leg_{1} Decay eigentime", 100, 0., 1000.);
-  hDecayTimeLeg2_ = book1D("DecayTimeLeg2", "SVfit leg_{2} Decay eigentime", 100, 0., 1000.);
-  hSVfitStatus_ = book1D("SVfitStatus", "SVfit Status", 10, -2.5, 7.5);
+  for ( std::vector<svFitHistManagerType*>::iterator svFitAlgorithmHistManager = svFitAlgorithmHistManagers_.begin();
+	svFitAlgorithmHistManager != svFitAlgorithmHistManagers_.end(); ++svFitAlgorithmHistManager ) {
+    (*svFitAlgorithmHistManager)->beginJob();
+  }
 
   bookWeightHistograms(*dqmStore_, "DiTauCandidateWeight", "Composite Weight", 
 		       hDiTauCandidateWeightPosLog_, hDiTauCandidateWeightNegLog_, hDiTauCandidateWeightZero_, 
@@ -119,21 +202,6 @@ double CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::getDiTauCandidateWei
   double diTauLeg1Weight = getTauJetWeight<T1>(*diTauCandidate.leg1(), diTauLeg1WeightExtractors_);
   double diTauLeg2Weight = getTauJetWeight<T2>(*diTauCandidate.leg2(), diTauLeg2WeightExtractors_);
   return (diTauLeg1Weight*diTauLeg2Weight);
-}
-
-template<typename T1, typename T2>
-void fillSVmassRecoSolutionHistogram(unsigned iSolution, 
-				     MonitorElement* hRecLeg1RecLeg2, MonitorElement* hGenLeg1RecLeg2, MonitorElement* hRecLeg1GenLeg2,  
-				     const CompositePtrCandidateT1T2MEt<T1,T2>& diTauCandidate, double weight)
-{
-  const std::vector<SVmassRecoSolution>& svFitSolutions = diTauCandidate.svFitSolutions();
-  if ( iSolution >= 0 && iSolution < svFitSolutions.size() ) {
-    if ( svFitSolutions[iSolution].isValidSolution() ) {
-      hRecLeg1RecLeg2->Fill(svFitSolutions[iSolution].p4().mass(), weight);
-      hGenLeg1RecLeg2->Fill((diTauCandidate.p4Leg1gen() + svFitSolutions[iSolution].p4Leg2()).mass(), weight);
-      hRecLeg1GenLeg2->Fill((svFitSolutions[iSolution].p4Leg1() + diTauCandidate.p4Leg2gen()).mass(), weight);
-    }
-  }
 }
 
 template<typename T1, typename T2>
@@ -167,80 +235,12 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
     
     double diTauCandidateWeight = getDiTauCandidateWeight(*diTauCandidate);
     double weight = getWeight(evtWeight, diTauCandidateWeight, diTauCandidateWeightSum);
-          
-    double minLogLikelihood = 1.e+6;
       
-    const std::vector<SVmassRecoSolution>& svFitSolutions = diTauCandidate->svFitSolutions();
-    //std::cout << "svFitSolutions.size = " << svFitSolutions.size() << std::endl;
-    for ( std::vector<SVmassRecoSolution>::const_iterator svFitSolution = svFitSolutions.begin();
-	  svFitSolution != svFitSolutions.end(); ++svFitSolution ) {
-      //std::cout << " svFitSolution->isValidSolution[" << svFitSolution - svFitSolutions.begin() << "]" 
-      //	  << " = " << svFitSolution->isValidSolution() << std::endl;
-      if ( svFitSolution->isValidSolution() ) {
-	
-	hX1_->Fill(svFitSolution->x1(), weight);
-	hX2_->Fill(svFitSolution->x2(), weight);
-/*
-	if ( diTauCandidate->p4Leg1gen().energy() > epsilon && 
-	     diTauCandidate->p4Leg2gen().energy() > epsilon ) {
-	  hX1vsGenX1_->Fill(diTauCandidate->x1gen(), svFitSolution->x1(), weight);
-	  hX1vsGenX1Profile_->getTProfile()->Fill(diTauCandidate->x1gen(), svFitSolution->x1(), weight);
-	  hX2vsGenX2_->Fill(diTauCandidate->x2gen(), svFitSolution->x2(), weight);
-	  hX2vsGenX2Profile_->getTProfile()->Fill(diTauCandidate->x2gen(), svFitSolution->x2(), weight);
-	}
- */	
-	hMass_->Fill(svFitSolution->p4().mass(), weight);
-	hMassVsLogLikelihood_->Fill(svFitSolution->p4().mass(), svFitSolution->logLikelihood(), weight);
-	hLogLikelihood_->Fill(svFitSolution->logLikelihood(), weight);
-	double leg1TotEnergy = ( svFitSolution->x1() > 0 && svFitSolution->x1() <= 1 ) ?
-	  svFitSolution->p4VisLeg1().energy()/svFitSolution->x1() : svFitSolution->p4VisLeg1().energy();
-	hDecayTimeLeg1_->Fill(compDecayEigenTime(svFitSolution->decayVertexPosLeg1(), 
-						 svFitSolution->primaryVertexPosSVrefitted(), leg1TotEnergy), weight);
-	double leg2TotEnergy = ( svFitSolution->x2() > 0 && svFitSolution->x2() <= 1 ) ?
-	  svFitSolution->p4VisLeg2().energy()/svFitSolution->x2() : svFitSolution->p4VisLeg2().energy();
-	hDecayTimeLeg2_->Fill(compDecayEigenTime(svFitSolution->decayVertexPosLeg2(), 
-						 svFitSolution->primaryVertexPosSVrefitted(), leg2TotEnergy), weight);
-	
-	if ( svFitSolution->logLikelihood() < minLogLikelihood ) minLogLikelihood = svFitSolution->logLikelihood();
-      }
-      
-      hSVfitStatus_->Fill(svFitSolution->svFitStatus(), weight);
+    for ( std::vector<svFitHistManagerType*>::iterator svFitAlgorithmHistManager = svFitAlgorithmHistManagers_.begin();
+	  svFitAlgorithmHistManager != svFitAlgorithmHistManagers_.end(); ++svFitAlgorithmHistManager ) {
+      (*svFitAlgorithmHistManager)->customFillHistograms<T1,T2>(*diTauCandidate, weight);
     }
-    
-    fillSVmassRecoSolutionHistogram(0, hMass1stSolution_, hGenLeg1RecLeg2Mass1stSolution_, hRecLeg1GenLeg2Mass1stSolution_, 
-				    *diTauCandidate, weight);
-    fillSVmassRecoSolutionHistogram(1, hMass2ndSolution_, hGenLeg1RecLeg2Mass2ndSolution_, hRecLeg1GenLeg2Mass2ndSolution_, 
-				    *diTauCandidate, weight);
-    fillSVmassRecoSolutionHistogram(2, hMass3rdSolution_, hGenLeg1RecLeg2Mass3rdSolution_, hRecLeg1GenLeg2Mass3rdSolution_, 
-				    *diTauCandidate, weight);
-    fillSVmassRecoSolutionHistogram(3, hMass4thSolution_, hGenLeg1RecLeg2Mass4thSolution_, hRecLeg1GenLeg2Mass4thSolution_, 
-				    *diTauCandidate, weight);
-    
-    double genDiTauMass = diTauCandidate->p4gen().mass();
-    double svFitMassBestMatch = 1.e+6;
-    double svFitMassAverage = 0.;
-    unsigned svFitMassNumSolutionsAveraged = 0;
-    double svFitMassAverageNumSigmaCut = 2.;
-    
-    for ( std::vector<SVmassRecoSolution>::const_iterator svFitSolution = svFitSolutions.begin();
-	  svFitSolution != svFitSolutions.end(); ++svFitSolution ) {
-      if ( svFitSolution->isValidSolution() && svFitSolution->svFitStatus() == 0 ) {
-	if ( TMath::Abs(svFitSolution->p4().mass() - genDiTauMass) < TMath::Abs(svFitMassBestMatch - genDiTauMass) ) {
-	  svFitMassBestMatch = svFitSolution->p4().mass();
-	}
-	
-	if ( svFitSolution->logLikelihood() < (0.5*svFitMassAverageNumSigmaCut*svFitMassAverageNumSigmaCut) ) {
-	  svFitMassAverage += svFitSolution->p4().mass();
-	  ++svFitMassNumSolutionsAveraged;
-	}
-      }
-    }
-    
-    if ( svFitMassBestMatch != 1.e+6 ) hMassBestMatch_->Fill(svFitMassBestMatch, weight);
-    
-    if ( svFitMassNumSolutionsAveraged > 0 ) hMassAverage_->Fill(svFitMassAverage/svFitMassNumSolutionsAveraged, weight);
-    hMassNumSolutionsAveraged_->Fill(svFitMassNumSolutionsAveraged, weight);
-    
+
     fillWeightHistograms(hDiTauCandidateWeightPosLog_, hDiTauCandidateWeightNegLog_, hDiTauCandidateWeightZero_, 
 			 hDiTauCandidateWeightLinear_, diTauCandidateWeight);
   }

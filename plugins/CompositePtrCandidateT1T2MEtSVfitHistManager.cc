@@ -104,9 +104,9 @@ void svFitHistManagerType::customFillHistograms(const CompositePtrCandidateT1T2M
 
     hLogLikelihood_->Fill(svFitSolution->logLikelihood(), weight);
 
-    hDecayTimeLeg1_->Fill(compDecayEigenTime(svFitSolution->leg1().decayVertexPos(),
+    hDecayTimeLeg1_->Fill(compDecayEigenTime(svFitSolution->leg1DecayVertex(),
 					     svFitSolution->eventVertexPosSVrefitted(), svFitSolution->leg1().p4().energy()), weight);
-    hDecayTimeLeg2_->Fill(compDecayEigenTime(svFitSolution->leg2().decayVertexPos(), 
+    hDecayTimeLeg2_->Fill(compDecayEigenTime(svFitSolution->leg2DecayVertex(),
 					     svFitSolution->eventVertexPosSVrefitted(), svFitSolution->leg2().p4().energy()), weight);
   }
     
@@ -228,7 +228,8 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
 	diTauCandidate != diTauCandidates->end(); ++diTauCandidate ) {
     
     //bool isGenMatched = matchesGenCandidatePair(*diTauCandidate);
-    //std::cout << " Pt = " << diTauCandidate->pt() << ", phi = " << diTauCandidate->phi() << ", visMass = " << diTauCandidate->p4Vis().mass() << std::endl;
+    //std::cout << " Pt = " << diTauCandidate->pt() << ", phi = " << diTauCandidate->phi() << "," 
+    //          << " visMass = " << diTauCandidate->p4Vis().mass() << std::endl;
     //std::cout << " isGenMatched = " << isGenMatched << std::endl;
     
     if ( requireGenMatch_ && !matchesGenCandidatePair(*diTauCandidate) ) continue;

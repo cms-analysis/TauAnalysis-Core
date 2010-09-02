@@ -148,14 +148,14 @@ CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::CompositePtrCandidateT1T2ME
       for ( vstring::const_iterator polarizationHypothesis = polarizationHypotheses.begin();
 	    polarizationHypothesis != polarizationHypotheses.end(); ++polarizationHypothesis ) {
 	edm::ParameterSet cfgSVfitAlgorithm_customized = (*cfgSVfitAlgorithm);
-	cfgSVfitAlgorithm_customized.addParameter<std::string>("svFitAlgorithmName", name);
+	cfgSVfitAlgorithm_customized.addParameter<std::string>("algorithmName", name);
 	cfgSVfitAlgorithm_customized.addParameter<std::string>("polarizationHypothesis", *polarizationHypothesis);
 	cfgSVfitAlgorithm_customized.addParameter<std::string>("dqmDirectory_store", dqmDirectory_store);
 	svFitAlgorithmHistManagers_.push_back(new svFitHistManagerType(cfgSVfitAlgorithm_customized));
       }
     } else {
       edm::ParameterSet cfgSVfitAlgorithm_customized = (*cfgSVfitAlgorithm);
-      cfgSVfitAlgorithm_customized.addParameter<std::string>("svFitAlgorithmName", name);
+      cfgSVfitAlgorithm_customized.addParameter<std::string>("algorithmName", name);
       cfgSVfitAlgorithm_customized.addParameter<std::string>("dqmDirectory_store", dqmDirectory_store);
       svFitAlgorithmHistManagers_.push_back(new svFitHistManagerType(cfgSVfitAlgorithm_customized));
     }

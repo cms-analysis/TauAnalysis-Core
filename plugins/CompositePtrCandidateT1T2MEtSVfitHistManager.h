@@ -47,6 +47,7 @@ namespace svFitHistogramManager_namespace
     MonitorElement* hX2vsGenX2Profile_;
  */
     MonitorElement* hMass_;
+    MonitorElement* hMassRes_;
     MonitorElement* hGenLeg1RecLeg2Mass_;
     MonitorElement* hRecLeg1GenLeg2Mass_;
     MonitorElement* hMassVsLogLikelihood_; 

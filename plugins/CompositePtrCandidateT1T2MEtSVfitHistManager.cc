@@ -58,7 +58,8 @@ void svFitHistManagerType::bookHistogramsImp()
   hX2vsGenX2_ = book2D("X2vsGenX2", "X_{2} vs. gen. X_{2}", 21, -0.01, 1.01, 100, -2.5, +2.5);
   hX2vsGenX2Profile_ = bookProfile1D("X2vsGenX2Profile", "X_{2} vs. gen. X_{2}", 51, -0.01, 1.01);
  */
-  hMass_ = book1D("Mass", " Mass", 50, 0., 250.);
+  hMass_ = book1D("Mass", "Mass", 50, 0., 250.);
+  hMassRes_ = book1D("MassRes", "Mass Resolution", 100, -2.5, +2.5);
   hGenLeg1RecLeg2Mass_ = book1D("GenLeg1RecLeg2Mass", "gen. leg_{1} + rec. leg_{2} Invariant Mass", 50, 0., 250.);
   hRecLeg1GenLeg2Mass_ = book1D("RecLeg1GenLeg2Mass", "rec. leg_{1} + gen. leg_{2} Invariant Mass", 50, 0., 250.);
 
@@ -96,7 +97,10 @@ void svFitHistManagerType::customFillHistograms(const CompositePtrCandidateT1T2M
       hX2vsGenX2Profile_->getTProfile()->Fill(diTauCandidate->x2gen(), svFitSolution->leg2().x(), weight);
     }
  */	
-    hMass_->Fill(svFitSolution->p4().mass(), weight);
+    double genMass = diTauCandidate.p4gen().mass();
+    double recMass = svFitSolution->p4().mass();
+    hMass_->Fill(recMass, weight);
+    if ( genMass > 0. ) hMassRes_->Fill((recMass - genMass)/genMass, weight);
     hGenLeg1RecLeg2Mass_->Fill((diTauCandidate.p4Leg1gen() + svFitSolution->leg2().p4()).mass(), weight);
     hRecLeg1GenLeg2Mass_->Fill((svFitSolution->leg1().p4() + diTauCandidate.p4Leg2gen()).mass(), weight);
 

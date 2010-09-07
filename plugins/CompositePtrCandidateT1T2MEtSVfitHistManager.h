@@ -17,49 +17,7 @@
 #include <vector>
 #include <string>
 
-namespace svFitHistogramManager_namespace
-{
-  class svFitHistManagerType : public HistManagerBase 
-  {
-   public:
-    svFitHistManagerType(const edm::ParameterSet&);
-
-    template<typename T1, typename T2>
-    void customFillHistograms(const CompositePtrCandidateT1T2MEt<T1,T2>&, double);
-
-  private:
-    void bookHistogramsImp();
-
-//-- dummy implementation of fillHistogramsImp function 
-//   declared as purely virtual function in HistManagerBase class
-    void fillHistogramsImp(const edm::Event&, const edm::EventSetup&, double) {}
-   
-    std::string algorithmName_;
-    std::string polarizationHypothesis_;
-
-//--- histograms
-    MonitorElement* hX1_;
-    MonitorElement* hX2_;
-/*
-    MonitorElement* hX1vsGenX1_;
-    MonitorElement* hX1vsGenX1Profile_;
-    MonitorElement* hX2vsGenX2_;
-    MonitorElement* hX2vsGenX2Profile_;
- */
-    MonitorElement* hMass_;
-    MonitorElement* hMassActErr_;
-    MonitorElement* hMassEstErr_;
-    MonitorElement* hMassRes_;
-    MonitorElement* hMassPull_;
-    MonitorElement* hGenLeg1RecLeg2Mass_;
-    MonitorElement* hRecLeg1GenLeg2Mass_;
-    MonitorElement* hMassVsLogLikelihood_; 
-    MonitorElement* hLogLikelihood_;
-    MonitorElement* hDecayTimeLeg1_;
-    MonitorElement* hDecayTimeLeg2_;
-    MonitorElement* hSVfitStatus_; 
-  };
-}
+template<typename T1, typename T2> class SVfitHistManagerEntryTemplateSpecific;
 
 template<typename T1, typename T2>
 class CompositePtrCandidateT1T2MEtSVfitHistManager : public HistManagerBase 
@@ -93,7 +51,8 @@ class CompositePtrCandidateT1T2MEtSVfitHistManager : public HistManagerBase
   PATLeptonTrackExtractor<T1> trackExtractorLeg1_;
   PATLeptonTrackExtractor<T2> trackExtractorLeg2_;
 
-  std::vector<svFitHistogramManager_namespace::svFitHistManagerType*> svFitAlgorithmHistManagers_;
+  typedef std::vector<SVfitHistManagerEntryTemplateSpecific<T1,T2>*> SVfitHistManagerEntryCollection;
+  SVfitHistManagerEntryCollection svFitAlgorithmHistManagers_;
 
   MonitorElement* hDiTauCandidateWeightPosLog_;
   MonitorElement* hDiTauCandidateWeightNegLog_;

@@ -222,7 +222,7 @@ class SVfitHistManagerEntryTemplateSpecific<pat::Muon,pat::Tau> : public SVfitHi
       return;
     }
   
-    if ( svFitSolution->isValidSolution() ) {
+    if ( svFitSolution->isValidSolution() && diTauCandidate.leg2()->genJet() != 0 ) {
       double recMass = svFitSolution->mass();
       
       int recTauDecayMode = diTauCandidate.leg2()->decayMode();

@@ -18,9 +18,13 @@
 #include "TauAnalysis/Core/interface/histManagerAuxFunctions.h"
 #include "TauAnalysis/CandidateTools/interface/candidateAuxFunctions.h"
 #include "TauAnalysis/DQMTools/interface/dqmAuxFunctions.h"
+#include "TauAnalysis/DQMTools/interface/generalAuxFunctions.h"
 
+#include <TPRegexp.h>
+#include <TString.h>
+#include <TObjArray.h>
+#include <TObjString.h>
 #include <TMath.h>
-#include <TFile.h>
 
 const double epsilon = 0.01;
 
@@ -48,7 +52,13 @@ class SVfitHistManagerEntryBase : public HistManagerBase
   std::string algorithmName_;
   std::string polarizationHypothesis_;
 
+  typedef std::vector<std::string> vstring;
+  vstring bestPolarizationHypothesis_;
+
   virtual void bookHistogramsImp();
+
+  template<typename T1, typename T2>
+  const SVfitDiTauSolution* getSVfitSolution(const CompositePtrCandidateT1T2MEt<T1,T2>&);
 
 //-- dummy implementation of fillHistogramsImp function 
 //   declared as purely virtual function in HistManagerBase class
@@ -69,13 +79,15 @@ class SVfitHistManagerEntryBase : public HistManagerBase
   MonitorElement* hMassEstErr_;
   MonitorElement* hMassRes_;
   MonitorElement* hMassPull_;
+
+  MonitorElement* hPolarizationHypothesis_;
   
   MonitorElement* hGenLeg1RecLeg2Mass_;
   MonitorElement* hRecLeg1GenLeg2Mass_;
 
-  MonitorElement* hMassVsLogLikelihood_; 
+  MonitorElement* hMassVsNegLogLikelihood_; 
   
-  MonitorElement* hLogLikelihood_;
+  MonitorElement* hNegLogLikelihood_;
   
   MonitorElement* hDecayTimeLeg1_;
   MonitorElement* hDecayTimeLeg2_;
@@ -86,14 +98,49 @@ class SVfitHistManagerEntryBase : public HistManagerBase
 SVfitHistManagerEntryBase::SVfitHistManagerEntryBase(const edm::ParameterSet& cfg)
   : HistManagerBase(cfg)
 {
+  std::cout << "<SVfitHistManagerEntryBase::SVfitHistManagerEntryBase>:" << std::endl;
+
   algorithmName_ = cfg.getParameter<std::string>("algorithmName");    
   polarizationHypothesis_ = cfg.exists("polarizationHypothesis") ? 
     cfg.getParameter<std::string>("polarizationHypothesis") : "Unknown";
+  std::cout << " polarizationHypothesis = " << polarizationHypothesis_ << std::endl;
+
+//--- check if polarizationHypothesis represents just a single hypothesis
+//    or the "best" (i.e. the one with the highest likelihood) out of a set of different solutions
+  TPRegexp regexpParser_bestPolarizationHypothesis("best\\{([LR]{2})(,[LR]{2})*\\}");
+
+  TString polarizationHypothesis_tstring = polarizationHypothesis_.data();
+  std::cout << regexpParser_bestPolarizationHypothesis.Match(polarizationHypothesis_tstring) << std::endl;
+  if ( regexpParser_bestPolarizationHypothesis.Match(polarizationHypothesis_tstring) >= 1 ) {
+    TObjArray* subStrings = regexpParser_bestPolarizationHypothesis.MatchS(polarizationHypothesis_tstring);
+
+    std::string subString = ((TObjString*)subStrings->At(0))->GetString().Data();
+    std::cout << " subString " << subString << std::endl;
+
+    size_t pos_start = 0;
+    size_t pos_end = std::string::npos;
+    {
+      pos_end = subString.find(",", pos_start);
+      bestPolarizationHypothesis_.push_back(std::string(subString, pos_start, pos_end));
+      pos_start = pos_end + 1;
+    } while ( pos_end != std::string::npos );
+
+    std::cout << " bestPolarizationHypothesis = " << format_vstring(bestPolarizationHypothesis_) << std::endl;
+
+//--- replace "special" characters { '{', ',', '}' } by underscores,
+//    in order to compose a valid dqmDirectory name
+    int errorFlag = 0;
+    polarizationHypothesis_ = replace_string(polarizationHypothesis_, "{", "_", 0,  1, errorFlag);
+    polarizationHypothesis_ = replace_string(polarizationHypothesis_, ",", "_", 0, 10, errorFlag);
+    polarizationHypothesis_ = replace_string(polarizationHypothesis_, "}", "_", 0,  1, errorFlag);
+    std::cout << " polarizationHypothesis(modified) = " << polarizationHypothesis_ << std::endl;
+  }
   
   dqmDirectory_store_ = cfg.getParameter<std::string>("dqmDirectory_store");
   dqmDirectory_store_ = dqmDirectoryName(dqmDirectory_store_).append(algorithmName_);
-  if ( polarizationHypothesis_ != "Unknown" ) 
+  if ( polarizationHypothesis_ != "Unknown" ) {
     dqmDirectory_store_ = dqmDirectoryName(dqmDirectory_store_).append(polarizationHypothesis_);
+  }
 }
 
 void SVfitHistManagerEntryBase::bookHistogramsImp()
@@ -112,12 +159,20 @@ void SVfitHistManagerEntryBase::bookHistogramsImp()
   hMassRes_ = book1D("MassRes", "Mass Resolution", 100, -2.5, +2.5);
   hMassPull_ = book1D("MassPull", "(rec. - gen. Mass)/estimated Uncertainty", 100, -5.0, +5.0);
 
+  hPolarizationHypothesis_ = book1D("PolarizationHypothesis", "(best) Polarization hypothesis", 6, -0.5, 5.5);
+  TAxis* xAxis = hPolarizationHypothesis_->getTH1()->GetXaxis();
+  xAxis->SetBinLabel(1, "Unknown");
+  xAxis->SetBinLabel(3, "LL");
+  xAxis->SetBinLabel(4, "LR");
+  xAxis->SetBinLabel(5, "RL");
+  xAxis->SetBinLabel(6, "RR");
+
   hGenLeg1RecLeg2Mass_ = book1D("GenLeg1RecLeg2Mass", "gen. leg_{1} + rec. leg_{2} Invariant Mass", 50, 0., 250.);
   hRecLeg1GenLeg2Mass_ = book1D("RecLeg1GenLeg2Mass", "rec. leg_{1} + gen. leg_{2} Invariant Mass", 50, 0., 250.);
 
-  hMassVsLogLikelihood_ = book2D("MassVsLogLikelihood", "SVfit Mass vs. log-Likelihood", 50, 0., 250., 20, -35., 25.);
+  hMassVsNegLogLikelihood_ = book2D("MassVsNegLogLikelihood", "SVfit Mass vs. -log(Likelihood)", 50, 0., 250., 20, -35., 25.);
 
-  hLogLikelihood_ = book1D("LogLikelihood", "SVfit log-Likelihood", 100, -50., 50.);
+  hNegLogLikelihood_ = book1D("NegLogLikelihood", "SVfit -log(Likelihood)", 100, -50., 50.);
 
   hDecayTimeLeg1_ = book1D("DecayTimeLeg1", "SVfit leg_{1} Decay eigentime", 100, 0., 1000.);
   hDecayTimeLeg2_ = book1D("DecayTimeLeg2", "SVfit leg_{2} Decay eigentime", 100, 0., 1000.);
@@ -126,9 +181,31 @@ void SVfitHistManagerEntryBase::bookHistogramsImp()
 }
 
 template<typename T1, typename T2>
+const SVfitDiTauSolution* SVfitHistManagerEntryBase::getSVfitSolution(const CompositePtrCandidateT1T2MEt<T1,T2>& diTauCandidate)
+{
+  const SVfitDiTauSolution* svFitSolution_best = 0;
+  double negLogLikelihood_best = -1.;
+  if ( bestPolarizationHypothesis_.size() > 0 ) {
+    for ( vstring::const_iterator polarizationHypothesis_i = bestPolarizationHypothesis_.begin();
+	  polarizationHypothesis_i != bestPolarizationHypothesis_.end(); ++polarizationHypothesis_i ) {
+      const SVfitDiTauSolution* svFitSolution_i = diTauCandidate.svFitSolution(algorithmName_, *polarizationHypothesis_i);
+      double negLogLikelihood_i = svFitSolution_i->negLogLikelihood();
+      if ( svFitSolution_best == 0 || negLogLikelihood_i < negLogLikelihood_best ) {
+	svFitSolution_best = svFitSolution_i;
+	negLogLikelihood_best = negLogLikelihood_i;
+      }
+    }
+  } else {
+    svFitSolution_best = diTauCandidate.svFitSolution(algorithmName_, polarizationHypothesis_);
+  }
+
+  return svFitSolution_best;
+}
+ 
+template<typename T1, typename T2>
 void SVfitHistManagerEntryBase::customFillHistograms(const CompositePtrCandidateT1T2MEt<T1,T2>& diTauCandidate, double weight)
 {
-  const SVfitDiTauSolution* svFitSolution = diTauCandidate.svFitSolution(algorithmName_, polarizationHypothesis_);
+  const SVfitDiTauSolution* svFitSolution = getSVfitSolution<T1,T2>(diTauCandidate);
   
   if ( !svFitSolution ) {
     edm::LogError("<SVfitHistManagerEntryBase::customFillHistograms>")
@@ -161,12 +238,15 @@ void SVfitHistManagerEntryBase::customFillHistograms(const CompositePtrCandidate
 	if ( recMassErr > 0. ) hMassPull_->Fill((recMass - genMass)/recMassErr, weight);
       }
     }
+    
+    hPolarizationHypothesis_->getTH1()->Fill(svFitSolution->polarizationHypothesisName().data(), weight);
+
     hGenLeg1RecLeg2Mass_->Fill((diTauCandidate.p4Leg1gen() + svFitSolution->leg2().p4()).mass(), weight);
     hRecLeg1GenLeg2Mass_->Fill((svFitSolution->leg1().p4() + diTauCandidate.p4Leg2gen()).mass(), weight);
 
-    hMassVsLogLikelihood_->Fill(svFitSolution->p4().mass(), svFitSolution->logLikelihood(), weight);
+    hMassVsNegLogLikelihood_->Fill(svFitSolution->p4().mass(), svFitSolution->negLogLikelihood(), weight);
 
-    hLogLikelihood_->Fill(svFitSolution->logLikelihood(), weight);
+    hNegLogLikelihood_->Fill(svFitSolution->negLogLikelihood(), weight);
 
     hDecayTimeLeg1_->Fill(compDecayEigenTime(svFitSolution->leg1DecayVertex(),
 					     svFitSolution->eventVertexPosSVrefitted(), svFitSolution->leg1().p4().energy()), weight);
@@ -213,8 +293,8 @@ class SVfitHistManagerEntryTemplateSpecific<pat::Muon,pat::Tau> : public SVfitHi
   {
     SVfitHistManagerEntryBase::customFillHistograms<pat::Muon,pat::Tau>(diTauCandidate, weight);
 
-    const SVfitDiTauSolution* svFitSolution = diTauCandidate.svFitSolution(algorithmName_, polarizationHypothesis_);
-  
+    const SVfitDiTauSolution* svFitSolution = getSVfitSolution<pat::Muon,pat::Tau>(diTauCandidate);
+    
     if ( !svFitSolution ) {
       edm::LogError("<SVfitHistManagerEntryTemplateSpecific::customFillHistograms>")
 	<< " No SVfitDiTauSolution object reconstructed for algorithm = " << algorithmName_ << "," 

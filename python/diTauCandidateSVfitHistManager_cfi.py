@@ -23,7 +23,7 @@ diTauCandidateSVfitHistManager = cms.PSet(
         ##),
         cms.PSet(
             name = cms.string("polKine"),
-            polarizationHypotheses = cms.vstring("LL", "LR", "RL", "RR", "best{LL,RR}", "best{LR,RL}")
+            polarizationHypotheses = cms.vstring("LL", "LR", "RL", "RR", "best{LL,RR}", "best{LR,RL}", "best{LL,LR,RL,RR}")
         )
     ),
 

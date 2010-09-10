@@ -74,6 +74,9 @@ class SVfitHistManagerEntryBase : public HistManagerBase
   MonitorElement* hX2vsGenX2_;
   MonitorElement* hX2vsGenX2Profile_;
  */
+  MonitorElement* hX1res_;
+  MonitorElement* hX2res_;
+
   MonitorElement* hMass_;    
   MonitorElement* hMassActErr_;
   MonitorElement* hMassEstErr_;
@@ -98,42 +101,45 @@ class SVfitHistManagerEntryBase : public HistManagerBase
 SVfitHistManagerEntryBase::SVfitHistManagerEntryBase(const edm::ParameterSet& cfg)
   : HistManagerBase(cfg)
 {
-  std::cout << "<SVfitHistManagerEntryBase::SVfitHistManagerEntryBase>:" << std::endl;
+  //std::cout << "<SVfitHistManagerEntryBase::SVfitHistManagerEntryBase>:" << std::endl;
 
   algorithmName_ = cfg.getParameter<std::string>("algorithmName");    
   polarizationHypothesis_ = cfg.exists("polarizationHypothesis") ? 
     cfg.getParameter<std::string>("polarizationHypothesis") : "Unknown";
-  std::cout << " polarizationHypothesis = " << polarizationHypothesis_ << std::endl;
+  //std::cout << " polarizationHypothesis = " << polarizationHypothesis_ << std::endl;
 
 //--- check if polarizationHypothesis represents just a single hypothesis
 //    or the "best" (i.e. the one with the highest likelihood) out of a set of different solutions
   TPRegexp regexpParser_bestPolarizationHypothesis("best\\{([LR]{2})(,[LR]{2})*\\}");
 
   TString polarizationHypothesis_tstring = polarizationHypothesis_.data();
-  std::cout << regexpParser_bestPolarizationHypothesis.Match(polarizationHypothesis_tstring) << std::endl;
   if ( regexpParser_bestPolarizationHypothesis.Match(polarizationHypothesis_tstring) >= 1 ) {
     TObjArray* subStrings = regexpParser_bestPolarizationHypothesis.MatchS(polarizationHypothesis_tstring);
 
     std::string subString = ((TObjString*)subStrings->At(0))->GetString().Data();
-    std::cout << " subString " << subString << std::endl;
+    //std::cout << " subString = " << subString << std::endl;
 
-    size_t pos_start = 0;
-    size_t pos_end = std::string::npos;
-    {
+    size_t pos_start = subString.find("{", 0);
+    size_t pos_end = subString.find("}", pos_start);
+    subString = std::string(subString, pos_start + 1, pos_end - pos_start - 1); 
+
+    pos_start = 0;
+    do {
       pos_end = subString.find(",", pos_start);
-      bestPolarizationHypothesis_.push_back(std::string(subString, pos_start, pos_end));
+      bestPolarizationHypothesis_.push_back(std::string(subString, pos_start, pos_end - pos_start));
       pos_start = pos_end + 1;
     } while ( pos_end != std::string::npos );
-
-    std::cout << " bestPolarizationHypothesis = " << format_vstring(bestPolarizationHypothesis_) << std::endl;
+    
+    std::cout << " bestPolarizationHypothesis = " << format_vstring(bestPolarizationHypothesis_) 
+	      << " (" << bestPolarizationHypothesis_.size() << " entries)" << std::endl;
 
 //--- replace "special" characters { '{', ',', '}' } by underscores,
 //    in order to compose a valid dqmDirectory name
     int errorFlag = 0;
     polarizationHypothesis_ = replace_string(polarizationHypothesis_, "{", "_", 0,  1, errorFlag);
     polarizationHypothesis_ = replace_string(polarizationHypothesis_, ",", "_", 0, 10, errorFlag);
-    polarizationHypothesis_ = replace_string(polarizationHypothesis_, "}", "_", 0,  1, errorFlag);
-    std::cout << " polarizationHypothesis(modified) = " << polarizationHypothesis_ << std::endl;
+    polarizationHypothesis_ = replace_string(polarizationHypothesis_, "}", "",  0,  1, errorFlag);
+    //std::cout << " polarizationHypothesis(modified) = " << polarizationHypothesis_ << std::endl;
   }
   
   dqmDirectory_store_ = cfg.getParameter<std::string>("dqmDirectory_store");
@@ -153,6 +159,9 @@ void SVfitHistManagerEntryBase::bookHistogramsImp()
   hX2vsGenX2_ = book2D("X2vsGenX2", "X_{2} vs. gen. X_{2}", 21, -0.01, 1.01, 100, -2.5, +2.5);
   hX2vsGenX2Profile_ = bookProfile1D("X2vsGenX2Profile", "X_{2} vs. gen. X_{2}", 51, -0.01, 1.01);
  */
+  hX1res_ = book1D("X1res", "rec. X_{1} - gen. X_{1}", 201, -1.005, + 1.005);
+  hX2res_ = book1D("X2res", "rec. X_{2} - gen. X_{2}", 201, -1.005, + 1.005);
+
   hMass_ = book1D("Mass", "Mass", 50, 0., 250.);
   hMassActErr_ = book1D("MassActErr", "rec. - gen. Mass", 100, -125., +125.);
   hMassEstErr_ = book1D("MassEstErr", "estimated Uncertainty on rec. Mass", 100, -125., +125.);
@@ -206,26 +215,29 @@ template<typename T1, typename T2>
 void SVfitHistManagerEntryBase::customFillHistograms(const CompositePtrCandidateT1T2MEt<T1,T2>& diTauCandidate, double weight)
 {
   const SVfitDiTauSolution* svFitSolution = getSVfitSolution<T1,T2>(diTauCandidate);
-  
+
   if ( !svFitSolution ) {
     edm::LogError("<SVfitHistManagerEntryBase::customFillHistograms>")
       << " No SVfitDiTauSolution object reconstructed for algorithm = " << algorithmName_ << "," 
       << " polarizaton hypothesis = " << polarizationHypothesis_ << " --> histograms will NOT be filled !!";
     return;
   }
-  
+
   if ( svFitSolution->isValidSolution() ) {
     hX1_->Fill(svFitSolution->leg1().x(), weight);
     hX2_->Fill(svFitSolution->leg2().x(), weight);
 /*
     if ( diTauCandidate->p4Leg1gen().energy() > epsilon && 
       diTauCandidate->p4Leg2gen().energy() > epsilon ) {
-      hX1vsGenX1_->Fill(diTauCandidate->x1gen(), svFitSolution->leg1().x(), weight);
-      hX1vsGenX1Profile_->getTProfile()->Fill(diTauCandidate->x1gen(), svFitSolution->leg1().x(), weight);
-      hX2vsGenX2_->Fill(diTauCandidate->x2gen(), svFitSolution->leg2().x(), weight);
-      hX2vsGenX2Profile_->getTProfile()->Fill(diTauCandidate->x2gen(), svFitSolution->leg2().x(), weight);
+      hX1vsGenX1_->Fill(diTauCandidate.x1gen(), svFitSolution->leg1().x(), weight);
+      hX1vsGenX1Profile_->getTProfile()->Fill(diTauCandidate.x1gen(), svFitSolution->leg1().x(), weight);
+      hX2vsGenX2_->Fill(diTauCandidate.x2gen(), svFitSolution->leg2().x(), weight);
+      hX2vsGenX2Profile_->getTProfile()->Fill(diTauCandidate.x2gen(), svFitSolution->leg2().x(), weight);
     }
  */	
+    hX1res_->Fill(svFitSolution->leg1().x() - diTauCandidate.x1gen(), weight);
+    hX2res_->Fill(svFitSolution->leg2().x() - diTauCandidate.x2gen(), weight);
+
     double genMass = diTauCandidate.p4gen().mass();
     double recMass = svFitSolution->mass();
     hMass_->Fill(recMass, weight);
@@ -294,7 +306,7 @@ class SVfitHistManagerEntryTemplateSpecific<pat::Muon,pat::Tau> : public SVfitHi
     SVfitHistManagerEntryBase::customFillHistograms<pat::Muon,pat::Tau>(diTauCandidate, weight);
 
     const SVfitDiTauSolution* svFitSolution = getSVfitSolution<pat::Muon,pat::Tau>(diTauCandidate);
-    
+
     if ( !svFitSolution ) {
       edm::LogError("<SVfitHistManagerEntryTemplateSpecific::customFillHistograms>")
 	<< " No SVfitDiTauSolution object reconstructed for algorithm = " << algorithmName_ << "," 
@@ -310,11 +322,26 @@ class SVfitHistManagerEntryTemplateSpecific<pat::Muon,pat::Tau> : public SVfitHi
       std::string genTauDecayMode = JetMCTagUtils::genTauDecayMode(*diTauCandidate.leg2()->genJet());
       
       if ( recTauDecayMode_string == genTauDecayMode ) {
-	if ( recTauDecayMode == reco::PFTauDecayMode::tauDecay1ChargedPion0PiZero ) hMassMuonOneProngNoPi0s_->Fill(recMass, weight);
-	if ( recTauDecayMode == reco::PFTauDecayMode::tauDecay1ChargedPion1PiZero ) hMassMuonOneProngOnePi0_->Fill(recMass, weight);
-	if ( recTauDecayMode == reco::PFTauDecayMode::tauDecay1ChargedPion2PiZero ) hMassMuonOneProngTwoPi0s_->Fill(recMass, weight);
-	if ( recTauDecayMode == reco::PFTauDecayMode::tauDecay3ChargedPion0PiZero ) hMassMuonThreeProngNoPi0s_->Fill(recMass, weight);
-	if ( recTauDecayMode == reco::PFTauDecayMode::tauDecay3ChargedPion1PiZero ) hMassMuonThreeProngOnePi0_->Fill(recMass, weight);
+	if ( recTauDecayMode == reco::PFTauDecayMode::tauDecay1ChargedPion0PiZero ) {
+	  hMassMuonOneProngNoPi0s_->Fill(recMass, weight);
+	  hX2resOneProngNoPi0s_->Fill(svFitSolution->leg2().x() - diTauCandidate.x2gen(), weight);
+	}
+	if ( recTauDecayMode == reco::PFTauDecayMode::tauDecay1ChargedPion1PiZero ) {
+	  hMassMuonOneProngOnePi0_->Fill(recMass, weight);
+	  hX2resOneProngOnePi0_->Fill(svFitSolution->leg2().x() - diTauCandidate.x2gen(), weight);
+	}
+	if ( recTauDecayMode == reco::PFTauDecayMode::tauDecay1ChargedPion2PiZero ) {
+	  hMassMuonOneProngTwoPi0s_->Fill(recMass, weight);
+	  hX2resOneProngTwoPi0s_->Fill(svFitSolution->leg2().x() - diTauCandidate.x2gen(), weight);
+	}
+	if ( recTauDecayMode == reco::PFTauDecayMode::tauDecay3ChargedPion0PiZero ) {
+	  hMassMuonThreeProngNoPi0s_->Fill(recMass, weight);
+	  hX2resThreeProngNoPi0s_->Fill(svFitSolution->leg2().x() - diTauCandidate.x2gen(), weight);
+	}
+	if ( recTauDecayMode == reco::PFTauDecayMode::tauDecay3ChargedPion1PiZero ) {
+	  hMassMuonThreeProngOnePi0_->Fill(recMass, weight);
+	  hX2resThreeProngOnePi0_->Fill(svFitSolution->leg2().x() - diTauCandidate.x2gen(), weight);
+	}
       }
     }
   }
@@ -324,11 +351,17 @@ class SVfitHistManagerEntryTemplateSpecific<pat::Muon,pat::Tau> : public SVfitHi
   {
     SVfitHistManagerEntryBase::bookHistogramsImp();
 
-    hMassMuonOneProngNoPi0s_ = book1D("MassMuonOneProngNoPi0s", "MassMuonOneProngNoPi0s", 50, 0., 250.);
-    hMassMuonOneProngOnePi0_ = book1D("MassMuonOneProngOnePi0", "MassMuonOneProngOnePi0", 50, 0., 250.);
-    hMassMuonOneProngTwoPi0s_ = book1D("MassMuonOneProngTwoPi0s", "MassMuonOneProngTwoPi0s", 50, 0., 250.);
+    hMassMuonOneProngNoPi0s_   = book1D("MassMuonOneProngNoPi0s", "MassMuonOneProngNoPi0s", 50, 0., 250.);
+    hMassMuonOneProngOnePi0_   = book1D("MassMuonOneProngOnePi0", "MassMuonOneProngOnePi0", 50, 0., 250.);
+    hMassMuonOneProngTwoPi0s_  = book1D("MassMuonOneProngTwoPi0s", "MassMuonOneProngTwoPi0s", 50, 0., 250.);
     hMassMuonThreeProngNoPi0s_ = book1D("MassMuonThreeProngNoPi0s", "MassMuonThreeProngNoPi0s", 50, 0., 250.);
     hMassMuonThreeProngOnePi0_ = book1D("MassMuonThreeProngOnePi0", "MassMuonThreeProngOnePi0", 50, 0., 250.);
+
+    hX2resOneProngNoPi0s_      = book1D("X2resOneProngNoPi0s", "X2resOneProngNoPi0s", 201, -1.005, + 1.005);
+    hX2resOneProngOnePi0_      = book1D("X2resOneProngOnePi0", "X2resOneProngOnePi0", 201, -1.005, + 1.005);
+    hX2resOneProngTwoPi0s_     = book1D("X2resOneProngTwoPi0s", "X2resOneProngTwoPi0s", 201, -1.005, + 1.005);
+    hX2resThreeProngNoPi0s_    = book1D("X2resThreeProngNoPi0s", "X2resThreeProngNoPi0s", 201, -1.005, + 1.005);
+    hX2resThreeProngOnePi0_    = book1D("X2resThreeProngOnePi0", "X2resThreeProngOnePi0", 201, -1.005, + 1.005);
   }
 
 //--- histograms
@@ -337,6 +370,12 @@ class SVfitHistManagerEntryTemplateSpecific<pat::Muon,pat::Tau> : public SVfitHi
   MonitorElement* hMassMuonOneProngTwoPi0s_;
   MonitorElement* hMassMuonThreeProngNoPi0s_;
   MonitorElement* hMassMuonThreeProngOnePi0_;
+
+  MonitorElement* hX2resOneProngNoPi0s_;
+  MonitorElement* hX2resOneProngOnePi0_;
+  MonitorElement* hX2resOneProngTwoPi0s_;
+  MonitorElement* hX2resThreeProngNoPi0s_;
+  MonitorElement* hX2resThreeProngOnePi0_;
 };
 
 //

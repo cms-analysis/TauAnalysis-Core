@@ -6,7 +6,7 @@ svFitLikelihoodAnalyzer = cms.PSet(
     pluginName = cms.string('svFitLikelihoodAnalyzer'),
     pluginType = cms.string('SVfitLikelihoodMuTauPairAnalyzer'),
       
-    diTauCandidateSource = cms.InputTag('selectedMuTauPairsForAHtoMuTauCollinearApproxZmassVetoCumulative'),
+    diTauCandidateSource = cms.InputTag('selectedMuTauPairsForAHtoMuTauPzetaDiffCumulative'),
 
     svFitAlgorithms = cms.VPSet(
         cms.PSet(

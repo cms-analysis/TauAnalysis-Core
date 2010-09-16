@@ -15,15 +15,26 @@ diTauCandidateSVfitHistManager = cms.PSet(
         cms.PSet(
             name = cms.string("psKine")
         ),
-        ##cms.PSet(
-        ##    name = cms.string("psKine_MEt")
-        ##),
-        ##cms.PSet(
-        ##    name = cms.string("psKine_MEt_ptBalance")
-        ##),
+        cms.PSet(
+            name = cms.string("psKine_MEt")
+        ),
+        cms.PSet(
+            name = cms.string("psKine_MEt_ptBalance")
+        ),
         cms.PSet(
             name = cms.string("polKine"),
-            polarizationHypotheses = cms.vstring("LL", "LR", "RL", "RR", "best{LL,RR}", "best{LR,RL}", "best{LL,LR,RL,RR}")
+            polarizationHypotheses = cms.vstring("LL", "LR", "RL", "RR", "best{LL,RR}", "best{LR,RL}", "best{LL,LR,RL,RR}"),
+            massHypotheses = cms.vdouble(90.)
+        ),
+        cms.PSet(
+            name = cms.string("polKine_MEt"),
+            polarizationHypotheses = cms.vstring("LL", "LR", "RL", "RR", "best{LL,RR}", "best{LR,RL}", "best{LL,LR,RL,RR}"),
+            massHypotheses = cms.vdouble(90.)
+        ),
+        cms.PSet(
+            name = cms.string("polKine_MEt_ptBalance"),
+            polarizationHypotheses = cms.vstring("LL", "LR", "RL", "RR", "best{LL,RR}", "best{LR,RL}", "best{LL,LR,RL,RR}"),
+            massHypotheses = cms.vdouble(90.)
         )
     ),
 

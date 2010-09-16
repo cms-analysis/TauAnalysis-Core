@@ -44,6 +44,7 @@ class SVfitHistManagerEntryBase : public HistManagerBase
 {
  public:
   SVfitHistManagerEntryBase(const edm::ParameterSet&);
+  ~SVfitHistManagerEntryBase();
 
   template<typename T1, typename T2>
   void customFillHistograms(const CompositePtrCandidateT1T2MEt<T1,T2>&, double);
@@ -130,8 +131,8 @@ SVfitHistManagerEntryBase::SVfitHistManagerEntryBase(const edm::ParameterSet& cf
       pos_start = pos_end + 1;
     } while ( pos_end != std::string::npos );
     
-    std::cout << " bestPolarizationHypothesis = " << format_vstring(bestPolarizationHypothesis_) 
-	      << " (" << bestPolarizationHypothesis_.size() << " entries)" << std::endl;
+    //std::cout << " bestPolarizationHypothesis = " << format_vstring(bestPolarizationHypothesis_) 
+    //	        << " (" << bestPolarizationHypothesis_.size() << " entries)" << std::endl;
 
 //--- replace "special" characters { '{', ',', '}' } by underscores,
 //    in order to compose a valid dqmDirectory name
@@ -147,6 +148,20 @@ SVfitHistManagerEntryBase::SVfitHistManagerEntryBase(const edm::ParameterSet& cf
   if ( polarizationHypothesis_ != "Unknown" ) {
     dqmDirectory_store_ = dqmDirectoryName(dqmDirectory_store_).append(polarizationHypothesis_);
   }
+}
+
+SVfitHistManagerEntryBase::~SVfitHistManagerEntryBase()
+{
+// nothing to be done yet...
+}
+
+void setAxisLabelPolarizationHypothesis(TAxis* axis)
+{
+  axis->SetBinLabel(1, "Unknown");
+  axis->SetBinLabel(3, "LL");
+  axis->SetBinLabel(4, "LR");
+  axis->SetBinLabel(5, "RL");
+  axis->SetBinLabel(6, "RR");
 }
 
 void SVfitHistManagerEntryBase::bookHistogramsImp()
@@ -167,14 +182,9 @@ void SVfitHistManagerEntryBase::bookHistogramsImp()
   hMassEstErr_ = book1D("MassEstErr", "estimated Uncertainty on rec. Mass", 100, -125., +125.);
   hMassRes_ = book1D("MassRes", "Mass Resolution", 100, -2.5, +2.5);
   hMassPull_ = book1D("MassPull", "(rec. - gen. Mass)/estimated Uncertainty", 100, -5.0, +5.0);
-
+ 
   hPolarizationHypothesis_ = book1D("PolarizationHypothesis", "(best) Polarization hypothesis", 6, -0.5, 5.5);
-  TAxis* xAxis = hPolarizationHypothesis_->getTH1()->GetXaxis();
-  xAxis->SetBinLabel(1, "Unknown");
-  xAxis->SetBinLabel(3, "LL");
-  xAxis->SetBinLabel(4, "LR");
-  xAxis->SetBinLabel(5, "RL");
-  xAxis->SetBinLabel(6, "RR");
+  setAxisLabelPolarizationHypothesis(hPolarizationHypothesis_->getTH1()->GetXaxis());
 
   hGenLeg1RecLeg2Mass_ = book1D("GenLeg1RecLeg2Mass", "gen. leg_{1} + rec. leg_{2} Invariant Mass", 50, 0., 250.);
   hRecLeg1GenLeg2Mass_ = book1D("RecLeg1GenLeg2Mass", "rec. leg_{1} + gen. leg_{2} Invariant Mass", 50, 0., 250.);
@@ -198,6 +208,9 @@ const SVfitDiTauSolution* SVfitHistManagerEntryBase::getSVfitSolution(const Comp
     for ( vstring::const_iterator polarizationHypothesis_i = bestPolarizationHypothesis_.begin();
 	  polarizationHypothesis_i != bestPolarizationHypothesis_.end(); ++polarizationHypothesis_i ) {
       const SVfitDiTauSolution* svFitSolution_i = diTauCandidate.svFitSolution(algorithmName_, *polarizationHypothesis_i);
+
+      if ( !svFitSolution_i ) continue;
+
       double negLogLikelihood_i = svFitSolution_i->negLogLikelihood();
       if ( svFitSolution_best == 0 || negLogLikelihood_i < negLogLikelihood_best ) {
 	svFitSolution_best = svFitSolution_i;
@@ -407,8 +420,9 @@ CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::CompositePtrCandidateT1T2ME
   for ( vParameterSet::const_iterator cfgSVfitAlgorithm = cfgSVfitAlgorithms.begin();
 	cfgSVfitAlgorithm != cfgSVfitAlgorithms.end(); ++cfgSVfitAlgorithm ) {
     std::string name = cfgSVfitAlgorithm->getParameter<std::string>("name");
+    algorithmNames_.push_back(name);
+
     if ( cfgSVfitAlgorithm->exists("polarizationHypotheses") ) {
-      typedef std::vector<std::string> vstring;
       vstring polarizationHypotheses = cfgSVfitAlgorithm->getParameter<vstring>("polarizationHypotheses");
       for ( vstring::const_iterator polarizationHypothesis = polarizationHypotheses.begin();
 	    polarizationHypothesis != polarizationHypotheses.end(); ++polarizationHypothesis ) {
@@ -417,12 +431,18 @@ CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::CompositePtrCandidateT1T2ME
 	cfgSVfitAlgorithm_customized.addParameter<std::string>("polarizationHypothesis", *polarizationHypothesis);
 	cfgSVfitAlgorithm_customized.addParameter<std::string>("dqmDirectory_store", dqmDirectory_store);
 	svFitAlgorithmHistManagers_.push_back(new SVfitHistManagerEntryTemplateSpecific<T1,T2>(cfgSVfitAlgorithm_customized));
+	
+	if ( polarizationHypothesis->find("best") == std::string::npos ) polarizationHypotheses_[name].push_back(*polarizationHypothesis);
       }
     } else {
       edm::ParameterSet cfgSVfitAlgorithm_customized = (*cfgSVfitAlgorithm);
       cfgSVfitAlgorithm_customized.addParameter<std::string>("algorithmName", name);
       cfgSVfitAlgorithm_customized.addParameter<std::string>("dqmDirectory_store", dqmDirectory_store);
       svFitAlgorithmHistManagers_.push_back(new SVfitHistManagerEntryTemplateSpecific<T1,T2>(cfgSVfitAlgorithm_customized));
+    }
+    
+    if ( cfgSVfitAlgorithm->exists("massHypotheses") ) {
+      massHypotheses_[name] = cfgSVfitAlgorithm->getParameter<vdouble>("massHypotheses");
     }
   }
 }
@@ -444,6 +464,14 @@ CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::~CompositePtrCandidateT1T2M
 	it != svFitAlgorithmHistManagers_.end(); ++it ) {
     delete (*it);
   }
+
+  for ( typename std::map<std::string, std::vector<massHypothesisEntry*> >::iterator it1 = massHypothesisEntries_.begin();
+	it1 != massHypothesisEntries_.end(); ++it1 ) {
+    for ( typename std::vector<massHypothesisEntry*>::iterator it2 = it1->second.begin();
+	  it2 != it1->second.end(); ++it2 ) {
+      delete (*it2);
+    }
+  }
 }
 
 template<typename T1, typename T2>
@@ -454,6 +482,43 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::bookHistogramsImp()
   for ( typename SVfitHistManagerEntryCollection::iterator svFitAlgorithmHistManager = svFitAlgorithmHistManagers_.begin();
 	svFitAlgorithmHistManager != svFitAlgorithmHistManagers_.end(); ++svFitAlgorithmHistManager ) {
     (*svFitAlgorithmHistManager)->beginJob();
+  }
+
+  for ( vstring::const_iterator algorithmName = algorithmNames_.begin();
+	algorithmName != algorithmNames_.end(); ++algorithmName ) {
+    std::string dqmDirectory_store_algorithm = dqmDirectoryName(dqmDirectory_store_).append(*algorithmName);
+    dqmStore_->setCurrentFolder(dqmDirectory_store_algorithm);
+
+    hMassLRvsRLbestLR_[*algorithmName] = book2D("MassLRvsRLbestLR", "Mass for LR vs. RL (-log(Likelihood_{LR} < -log(Likelihood_{RL}",
+						50, 0., 250., 50, 0., 250.);
+    hMassLRvsRLbestRL_[*algorithmName] = book2D("MassLRvsRLbestRL", "Mass for LR vs. RL (-log(Likelihood_{RL} < -log(Likelihood_{LR}",
+						50, 0., 250., 50, 0., 250.);
+    hMassLLvsRRbestLL_[*algorithmName] = book2D("MassLLvsRRbestLL", "Mass for LL vs. RR (-log(Likelihood_{LL} < -log(Likelihood_{RR}",
+						50, 0., 250., 50, 0., 250.);
+    hMassLLvsRRbestRR_[*algorithmName] = book2D("MassLLvsRRbestRR", "Mass for LL vs. RR (-log(Likelihood_{RR} < -log(Likelihood_{LL}",
+						50, 0., 250., 50, 0., 250.);
+
+    
+    for ( vdouble::const_iterator massHypothesis = massHypotheses_[*algorithmName].begin();
+	  massHypothesis != massHypotheses_[*algorithmName].end(); ++massHypothesis ) {
+      std::ostringstream massHypothesisString;
+      massHypothesisString << (*massHypothesis);
+      
+      std::string hMassName_i = std::string("Mass").append("_").append(massHypothesisString.str());
+      MonitorElement* hMass_i = book1D(hMassName_i, hMassName_i, 50, 0., 250.);
+      
+      std::string hPolarizationHypothesisName_i = std::string("PolarizationHypothesis").append("_").append(massHypothesisString.str());
+      MonitorElement* hPolarizationHypothesis_i = book1D(hPolarizationHypothesisName_i, hPolarizationHypothesisName_i, 6, -0.5, 5.5);
+      setAxisLabelPolarizationHypothesis(hPolarizationHypothesis_i->getTH1()->GetXaxis());
+      
+      std::string hX1resName_i = std::string("X1res").append("_").append(massHypothesisString.str());
+      MonitorElement* hX1res_i = book1D(hX1resName_i, hX1resName_i, 201, -1.005, + 1.005);
+      
+      std::string hX2resName_i = std::string("X2res").append("_").append(massHypothesisString.str());
+      MonitorElement* hX2res_i = book1D(hX2resName_i, hX2resName_i, 201, -1.005, + 1.005);
+      
+      massHypothesisEntries_[*algorithmName].push_back(new massHypothesisEntry(hMass_i, hPolarizationHypothesis_i, hX1res_i, hX2res_i));
+    }
   }
 
   bookWeightHistograms(*dqmStore_, "DiTauCandidateWeight", "Composite Weight", 
@@ -507,6 +572,67 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
       (*svFitAlgorithmHistManager)->customFillHistograms(*diTauCandidate, weight);
     }
 
+    for ( vstring::const_iterator algorithmName = algorithmNames_.begin();
+	  algorithmName != algorithmNames_.end(); ++algorithmName ) {
+      const SVfitDiTauSolution* svFitSolution_LR = diTauCandidate->svFitSolution(*algorithmName, "LR");
+      const SVfitDiTauSolution* svFitSolution_RL = diTauCandidate->svFitSolution(*algorithmName, "RL");
+      if ( svFitSolution_LR && svFitSolution_RL ) {
+	double mass_LR = svFitSolution_LR->mass();
+	double negLogLikelihood_LR = svFitSolution_LR->negLogLikelihood();
+	double mass_RL = svFitSolution_RL->mass();
+	double negLogLikelihood_RL = svFitSolution_RL->negLogLikelihood();
+	if      ( negLogLikelihood_LR < negLogLikelihood_RL) hMassLRvsRLbestLR_[*algorithmName]->Fill(mass_RL, mass_LR,  weight);
+	else if ( negLogLikelihood_RL < negLogLikelihood_LR) hMassLRvsRLbestRL_[*algorithmName]->Fill(mass_RL, mass_LR,  weight);
+      }
+      
+      const SVfitDiTauSolution* svFitSolution_LL = diTauCandidate->svFitSolution(*algorithmName, "LL");
+      const SVfitDiTauSolution* svFitSolution_RR = diTauCandidate->svFitSolution(*algorithmName, "RR");
+      if ( svFitSolution_LL && svFitSolution_RR ) {
+	double mass_LL = svFitSolution_LL->mass();
+	double negLogLikelihood_LL = svFitSolution_LL->negLogLikelihood();
+	double mass_RR = svFitSolution_RR->mass();
+	double negLogLikelihood_RR = svFitSolution_RR->negLogLikelihood();
+	if      ( negLogLikelihood_LL < negLogLikelihood_RR) hMassLLvsRRbestLL_[*algorithmName]->Fill(mass_RR, mass_LL,  weight);
+	else if ( negLogLikelihood_RR < negLogLikelihood_LL) hMassLLvsRRbestRR_[*algorithmName]->Fill(mass_RR, mass_LL,  weight);
+      }
+
+      vstring polarizationHypotheses = polarizationHypotheses_[*algorithmName];
+      if ( polarizationHypotheses.size() > 0 ) {
+	vdouble massHypotheses = massHypotheses_[*algorithmName];
+	std::vector<massHypothesisEntry*> massHypothesisEntries = massHypothesisEntries_[*algorithmName];
+	assert(massHypotheses.size() == massHypothesisEntries.size());
+
+	unsigned numMassHypotheses = massHypotheses.size();
+	for ( unsigned iMassHypothesis = 0; iMassHypothesis < numMassHypotheses; ++iMassHypothesis ) {
+	  double mass0 = massHypotheses[iMassHypothesis];
+	  
+	  massHypothesisEntry* massHypothesisEntry_i = massHypothesisEntries[iMassHypothesis];
+	  
+	  const SVfitDiTauSolution* svFitSolution_best = 0;
+	  double dMass_best = -1.;
+	  for ( vstring::const_iterator polarizationHypothesis_i = polarizationHypotheses.begin();
+		polarizationHypothesis_i != polarizationHypotheses.end(); ++polarizationHypothesis_i ) {
+	    const SVfitDiTauSolution* svFitSolution_i = diTauCandidate->svFitSolution(*algorithmName, *polarizationHypothesis_i);
+	    if ( !svFitSolution_i ) continue;
+	    
+	    double dMass_i = TMath::Abs(mass0 - svFitSolution_i->mass());
+	    if ( svFitSolution_best == 0 || dMass_i < dMass_best ) {
+	      svFitSolution_best = svFitSolution_i;
+	      dMass_best = dMass_i;
+	    }
+	  }
+	
+	  if ( svFitSolution_best ) {
+	    massHypothesisEntry_i->hMass_->Fill(svFitSolution_best->mass(), weight);
+	    std::string polarizationHypothesisName_best = svFitSolution_best->polarizationHypothesisName();
+	    massHypothesisEntry_i->hPolarizationHypothesis_->getTH1()->Fill(polarizationHypothesisName_best.data(), weight);
+	    massHypothesisEntry_i->hX1res_->Fill(svFitSolution_best->leg1().x() - diTauCandidate->x1gen(), weight);
+	    massHypothesisEntry_i->hX2res_ ->Fill(svFitSolution_best->leg2().x() - diTauCandidate->x2gen(), weight);
+	  }
+	}
+      }
+    }
+    
     fillWeightHistograms(hDiTauCandidateWeightPosLog_, hDiTauCandidateWeightNegLog_, hDiTauCandidateWeightZero_, 
 			 hDiTauCandidateWeightLinear_, diTauCandidateWeight);
   }

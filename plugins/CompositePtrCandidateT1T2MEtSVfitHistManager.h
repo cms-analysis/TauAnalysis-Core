@@ -40,6 +40,15 @@ class CompositePtrCandidateT1T2MEtSVfitHistManager : public HistManagerBase
 
   bool requireGenMatch_;
 
+  typedef std::vector<std::string> vstring;
+  vstring algorithmNames_;
+
+  typedef std::vector<double> vdouble;
+  std::map<std::string, vdouble> massHypotheses_; // key = algorithmName, value = vector of mass hypotheses
+
+  std::map<std::string, vstring> polarizationHypotheses_; // key = algorithmName, value = vector of polarization hypotheses 
+                                                          // to be checked for each mass hypothesis
+
 //--- "helper" class for accessing weight values
 //    associated to tau decay products
 //    (efficiency/fake-rate with which the tau-jet passes the tau id. criteria)
@@ -53,6 +62,28 @@ class CompositePtrCandidateT1T2MEtSVfitHistManager : public HistManagerBase
 
   typedef std::vector<SVfitHistManagerEntryTemplateSpecific<T1,T2>*> SVfitHistManagerEntryCollection;
   SVfitHistManagerEntryCollection svFitAlgorithmHistManagers_;
+
+  std::map<std::string, MonitorElement*> hMassLRvsRLbestLR_; // key = algorithmName
+  std::map<std::string, MonitorElement*> hMassLRvsRLbestRL_; // key = algorithmName
+  std::map<std::string, MonitorElement*> hMassLLvsRRbestLL_; // key = algorithmName
+  std::map<std::string, MonitorElement*> hMassLLvsRRbestRR_; // key = algorithmName
+
+  struct massHypothesisEntry
+  {
+    massHypothesisEntry(MonitorElement* hMass, MonitorElement* hPolarizationHypothesis, MonitorElement* hX1res, MonitorElement* hX2res)
+      : hMass_(hMass),
+	hPolarizationHypothesis_(hPolarizationHypothesis),
+	hX1res_(hX1res),
+	hX2res_(hX2res)
+    {}
+    MonitorElement* hMass_;   
+    MonitorElement* hPolarizationHypothesis_;
+    MonitorElement* hX1res_;
+    MonitorElement* hX2res_;
+  };
+
+  std::map<std::string, std::vector<massHypothesisEntry*> > massHypothesisEntries_; // key = algorithmName, 
+                                                                                    // value = vector of massHypothesisEntries
 
   MonitorElement* hDiTauCandidateWeightPosLog_;
   MonitorElement* hDiTauCandidateWeightNegLog_;

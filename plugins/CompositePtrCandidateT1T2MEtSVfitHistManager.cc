@@ -105,6 +105,7 @@ SVfitHistManagerEntryBase::SVfitHistManagerEntryBase(const edm::ParameterSet& cf
   //std::cout << "<SVfitHistManagerEntryBase::SVfitHistManagerEntryBase>:" << std::endl;
 
   algorithmName_ = cfg.getParameter<std::string>("algorithmName");    
+  //std::cout << " algorithmName = " << algorithmName_ << std::endl;
   polarizationHypothesis_ = cfg.exists("polarizationHypothesis") ? 
     cfg.getParameter<std::string>("polarizationHypothesis") : "Unknown";
   //std::cout << " polarizationHypothesis = " << polarizationHypothesis_ << std::endl;
@@ -402,7 +403,7 @@ CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::CompositePtrCandidateT1T2ME
   //std::cout << "<CompositePtrCandidateT1T2MEtSVfitHistManager::CompositePtrCandidateT1T2MEtSVfitHistManager>:" << std::endl;
 
   diTauCandidateSrc_ = cfg.getParameter<edm::InputTag>("diTauCandidateSource");
-  //std::cout << " diTauCandidateSrc = " << diTauCandidateSrc_ << std::endl;
+  //std::cout << " diTauCandidateSrc = " << diTauCandidateSrc_.label() << std::endl;
 
   diTauLeg1WeightExtractors_ = getTauJetWeightExtractors<T1>(cfg, "diTauLeg1WeightSource");
   diTauLeg2WeightExtractors_ = getTauJetWeightExtractors<T2>(cfg, "diTauLeg2WeightSource");
@@ -572,10 +573,11 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
       (*svFitAlgorithmHistManager)->customFillHistograms(*diTauCandidate, weight);
     }
 
+    int errorFlag;
     for ( vstring::const_iterator algorithmName = algorithmNames_.begin();
 	  algorithmName != algorithmNames_.end(); ++algorithmName ) {
-      const SVfitDiTauSolution* svFitSolution_LR = diTauCandidate->svFitSolution(*algorithmName, "LR");
-      const SVfitDiTauSolution* svFitSolution_RL = diTauCandidate->svFitSolution(*algorithmName, "RL");
+      const SVfitDiTauSolution* svFitSolution_LR = diTauCandidate->svFitSolution(*algorithmName, "LR", &errorFlag);
+      const SVfitDiTauSolution* svFitSolution_RL = diTauCandidate->svFitSolution(*algorithmName, "RL", &errorFlag);
       if ( svFitSolution_LR && svFitSolution_RL ) {
 	double mass_LR = svFitSolution_LR->mass();
 	double negLogLikelihood_LR = svFitSolution_LR->negLogLikelihood();
@@ -585,8 +587,8 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
 	else if ( negLogLikelihood_RL < negLogLikelihood_LR) hMassLRvsRLbestRL_[*algorithmName]->Fill(mass_RL, mass_LR,  weight);
       }
       
-      const SVfitDiTauSolution* svFitSolution_LL = diTauCandidate->svFitSolution(*algorithmName, "LL");
-      const SVfitDiTauSolution* svFitSolution_RR = diTauCandidate->svFitSolution(*algorithmName, "RR");
+      const SVfitDiTauSolution* svFitSolution_LL = diTauCandidate->svFitSolution(*algorithmName, "LL", &errorFlag);
+      const SVfitDiTauSolution* svFitSolution_RR = diTauCandidate->svFitSolution(*algorithmName, "RR", &errorFlag);
       if ( svFitSolution_LL && svFitSolution_RR ) {
 	double mass_LL = svFitSolution_LL->mass();
 	double negLogLikelihood_LL = svFitSolution_LL->negLogLikelihood();

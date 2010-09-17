@@ -4,9 +4,9 @@ from TauAnalysis.CandidateTools.svFitAlgorithm_cfi import *
 
 svFitLikelihoodAnalyzer = cms.PSet(    
     pluginName = cms.string('svFitLikelihoodAnalyzer'),
-    pluginType = cms.string('SVfitLikelihoodMuTauPairAnalyzer'),
+    pluginType = cms.string('SVfitLikelihoodDiTauAnalyzer'),
       
-    diTauCandidateSource = cms.InputTag('selectedMuTauPairsForAHtoMuTauPzetaDiffCumulative'),
+    diTauCandidateSource = cms.InputTag(''),
 
     svFitAlgorithms = cms.VPSet(
         cms.PSet(
@@ -17,11 +17,21 @@ svFitLikelihoodAnalyzer = cms.PSet(
         ),
         cms.PSet(
             name = cms.string("psKine_MEt_ptBalance")
+        ),
+        cms.PSet(
+            name = cms.string("polKine")
+        ),
+        cms.PSet(
+            name = cms.string("polKine_MEt")
+        ),
+        cms.PSet(
+            name = cms.string("polKine_MEt_ptBalance")
         )
     ),
 
     svFitLikelihoodFunctions = cms.VPSet(
         svFitLikelihoodDiTauKinematicsPhaseSpace,
+        svFitLikelihoodDiTauKinematicsPolarized,
         svFitLikelihoodMEt,
         svFitLikelihoodDiTauPtBalance
     )

@@ -274,10 +274,8 @@ void SVfitHistManagerEntryBase::customFillHistograms(const CompositePtrCandidate
 
     hNegLogLikelihood_->Fill(svFitSolution->negLogLikelihood(), weight);
 
-    hDecayTimeLeg1_->Fill(compDecayEigenTime(svFitSolution->leg1DecayVertex(),
-					     svFitSolution->eventVertexPosSVrefitted(), svFitSolution->leg1().p4().energy()), weight);
-    hDecayTimeLeg2_->Fill(compDecayEigenTime(svFitSolution->leg2DecayVertex(),
-					     svFitSolution->eventVertexPosSVrefitted(), svFitSolution->leg2().p4().energy()), weight);
+    hDecayTimeLeg1_->Fill(compDecayEigenTime(svFitSolution->leg1DecayDistance(), svFitSolution->leg1().p4().energy()), weight);
+    hDecayTimeLeg2_->Fill(compDecayEigenTime(svFitSolution->leg2DecayDistance(), svFitSolution->leg2().p4().energy()), weight);
   }
     
   hSVfitStatus_->Fill(svFitSolution->minuitStatus(), weight);

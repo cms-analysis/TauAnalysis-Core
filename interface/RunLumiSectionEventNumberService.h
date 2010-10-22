@@ -1,5 +1,5 @@
-#ifndef TauAnalysis_Core_RunEventNumberService_h  
-#define TauAnalysis_Core_RunEventNumberService_h
+#ifndef TauAnalysis_Core_RunLumiSectionEventNumberService_h  
+#define TauAnalysis_Core_RunLumiSectionEventNumberService_h
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
@@ -9,28 +9,28 @@
 #include <string>
 #include <map>
 
-class RunEventNumberService
+class RunLumiSectionEventNumberService
 {
   struct filterConfigEntry
   {
-    bool doSaveRunEventNumbers_passed_;
+    bool doSaveRunLumiSectionEventNumbers_passed_;
     std::string dqmDirectory_passed_;
-    bool doSaveRunEventNumbers_rejected_;
+    bool doSaveRunLumiSectionEventNumbers_rejected_;
     std::string dqmDirectory_rejected_;
-    bool doSaveRunEventNumbers_exclRejected_;
+    bool doSaveRunLumiSectionEventNumbers_exclRejected_;
     std::string dqmDirectory_exclRejected_;
-    bool doSaveRunEventNumbers_passed_cumulative_;
+    bool doSaveRunLumiSectionEventNumbers_passed_cumulative_;
     std::string dqmDirectory_passed_cumulative_;
-    bool doSaveRunEventNumbers_rejected_cumulative_;
+    bool doSaveRunLumiSectionEventNumbers_rejected_cumulative_;
     std::string dqmDirectory_rejected_cumulative_;
   };
 
  public: 
-  explicit RunEventNumberService(const edm::ParameterSet&);
-  ~RunEventNumberService();
+  explicit RunLumiSectionEventNumberService(const edm::ParameterSet&);
+  ~RunLumiSectionEventNumberService();
 
   typedef std::vector<std::pair<std::string, bool> > filterResults_type;
-  void update(edm::RunNumber_t, edm::EventNumber_t, edm::LuminosityBlockNumber_t,
+  void update(edm::RunNumber_t, edm::LuminosityBlockNumber_t, edm::EventNumber_t,
 	      const filterResults_type&, const filterResults_type&, double);
 
  private:

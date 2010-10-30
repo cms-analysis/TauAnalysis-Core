@@ -43,6 +43,8 @@ diTauCandidateSVfitHistManager = cms.PSet(
         )
     ),
 
+    vertexPtThresholds = cms.vdouble(5., 10., 15., 20.),
+
     #requireGenMatch = cms.bool(True),
     requireGenMatch = cms.bool(False),
 

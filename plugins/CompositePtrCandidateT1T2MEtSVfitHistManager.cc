@@ -47,7 +47,7 @@ class SVfitHistManagerEntryBase : public HistManagerBase
   ~SVfitHistManagerEntryBase();
 
   template<typename T1, typename T2>
-  void customFillHistograms(const CompositePtrCandidateT1T2MEt<T1,T2>&, double);
+  void customFillHistograms(const CompositePtrCandidateT1T2MEt<T1,T2>&, const reco::VertexCollection&, double);
 
  protected:
   std::string algorithmName_;
@@ -78,11 +78,16 @@ class SVfitHistManagerEntryBase : public HistManagerBase
   MonitorElement* hX1res_;
   MonitorElement* hX2res_;
 
-  MonitorElement* hMass_;    
+  MonitorElement* hMass_;
   MonitorElement* hMassActErr_;
   MonitorElement* hMassEstErr_;
   MonitorElement* hMassRes_;
   MonitorElement* hMassPull_;
+
+  typedef std::vector<MonitorElement*> vMonitorElement;
+  vMonitorElement hMassVsNumVertices_;
+  typedef std::vector<double> vdouble;
+  vdouble vertexPtThresholds_;
 
   MonitorElement* hPolarizationHypothesis_;
   
@@ -183,6 +188,16 @@ void SVfitHistManagerEntryBase::bookHistogramsImp()
   hMassEstErr_ = book1D("MassEstErr", "estimated Uncertainty on rec. Mass", 100, -125., +125.);
   hMassRes_ = book1D("MassRes", "Mass Resolution", 100, -2.5, +2.5);
   hMassPull_ = book1D("MassPull", "(rec. - gen. Mass)/estimated Uncertainty", 100, -5.0, +5.0);
+
+  for ( vdouble::const_iterator vertexPtThreshold = vertexPtThresholds_.begin();
+	vertexPtThreshold != vertexPtThresholds_.end(); ++vertexPtThreshold ) {
+    std::ostringstream meName_ostringstream;
+    meName_ostringstream << "MassVsNumVerticesPtGt" << std::fixed << std::setprecision(1) << (*vertexPtThreshold);
+    int errorFlag = 0;
+    std::string meName_string = replace_string(meName_ostringstream.str(), ".", "_", 0, 1, errorFlag);
+    MonitorElement* me = book2D(meName_string.data(), meName_string.data(), 50, 0., 250., 10, -0.5, 9.5);
+    hMassVsNumVertices_.push_back(me);
+  }
  
   hPolarizationHypothesis_ = book1D("PolarizationHypothesis", "(best) Polarization hypothesis", 6, -0.5, 5.5);
   setAxisLabelPolarizationHypothesis(hPolarizationHypothesis_->getTH1()->GetXaxis());
@@ -226,7 +241,8 @@ const SVfitDiTauSolution* SVfitHistManagerEntryBase::getSVfitSolution(const Comp
 }
  
 template<typename T1, typename T2>
-void SVfitHistManagerEntryBase::customFillHistograms(const CompositePtrCandidateT1T2MEt<T1,T2>& diTauCandidate, double weight)
+void SVfitHistManagerEntryBase::customFillHistograms(
+       const CompositePtrCandidateT1T2MEt<T1,T2>& diTauCandidate, const reco::VertexCollection& recoVertices, double weight)
 {
   const SVfitDiTauSolution* svFitSolution = getSVfitSolution<T1,T2>(diTauCandidate);
 
@@ -265,6 +281,14 @@ void SVfitHistManagerEntryBase::customFillHistograms(const CompositePtrCandidate
       }
     }
     
+    std::vector<double> trackPtSums = compTrackPtSums(recoVertices);
+    assert(vertexPtThresholds_.size() == hMassVsNumVertices_.size());
+    size_t numVertexPtThresholds = vertexPtThresholds_.size();
+    for ( size_t iVertexPtThreshold = 0; iVertexPtThreshold < numVertexPtThresholds; ++iVertexPtThreshold ) {
+      size_t numVertices = getNumVerticesPtGtThreshold(trackPtSums, vertexPtThresholds_[iVertexPtThreshold]);
+      hMassVsNumVertices_[iVertexPtThreshold]->Fill(recMass, numVertices, weight);
+    }
+
     hPolarizationHypothesis_->getTH1()->Fill(svFitSolution->polarizationHypothesisName().data(), weight);
 
     hGenLeg1RecLeg2Mass_->Fill((diTauCandidate.p4Leg1gen() + svFitSolution->leg2().p4()).mass(), weight);
@@ -293,9 +317,10 @@ class SVfitHistManagerEntryTemplateSpecific : public SVfitHistManagerEntryBase
     : SVfitHistManagerEntryBase(cfg)
   {}
 
-  void customFillHistograms(const CompositePtrCandidateT1T2MEt<T1,T2>& diTauCandidate, double weight)
+  void customFillHistograms(const CompositePtrCandidateT1T2MEt<T1,T2>& diTauCandidate, 
+			    const reco::VertexCollection& recoVertices, double weight)
   {
-    SVfitHistManagerEntryBase::customFillHistograms<T1,T2>(diTauCandidate, weight);
+    SVfitHistManagerEntryBase::customFillHistograms<T1,T2>(diTauCandidate, recoVertices, weight);
   }
 
  private:
@@ -313,9 +338,10 @@ class SVfitHistManagerEntryTemplateSpecific<pat::Muon,pat::Tau> : public SVfitHi
     : SVfitHistManagerEntryBase(cfg)
   {}
 
-  void customFillHistograms(const CompositePtrCandidateT1T2MEt<pat::Muon,pat::Tau>& diTauCandidate, double weight)
+  void customFillHistograms(const CompositePtrCandidateT1T2MEt<pat::Muon,pat::Tau>& diTauCandidate, 
+			    const reco::VertexCollection& recoVertices, double weight)
   {
-    SVfitHistManagerEntryBase::customFillHistograms<pat::Muon,pat::Tau>(diTauCandidate, weight);
+    SVfitHistManagerEntryBase::customFillHistograms<pat::Muon,pat::Tau>(diTauCandidate, recoVertices, weight);
 
     const SVfitDiTauSolution* svFitSolution = getSVfitSolution<pat::Muon,pat::Tau>(diTauCandidate);
 
@@ -402,6 +428,9 @@ CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::CompositePtrCandidateT1T2ME
 
   diTauCandidateSrc_ = cfg.getParameter<edm::InputTag>("diTauCandidateSource");
   //std::cout << " diTauCandidateSrc = " << diTauCandidateSrc_.label() << std::endl;
+
+  vertexSrc_ = cfg.getParameter<edm::InputTag>("vertexSource");
+  //std::cout << " vertexSrc = " << vertexSrc_ << std::endl;
 
   diTauLeg1WeightExtractors_ = getTauJetWeightExtractors<T1>(cfg, "diTauLeg1WeightSource");
   diTauLeg2WeightExtractors_ = getTauJetWeightExtractors<T2>(cfg, "diTauLeg2WeightSource");
@@ -545,6 +574,9 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
   //std::cout << " diTauCandidateSrc = " << diTauCandidateSrc_.label() << ":" 
   //	      << " diTauCandidates.size = " << diTauCandidates->size() << std::endl;
   
+  edm::Handle<reco::VertexCollection> recoVertices;
+  evt.getByLabel(vertexSrc_, recoVertices);
+
   double diTauCandidateWeightSum = 0.;
   for ( typename CompositePtrCandidateCollection::const_iterator diTauCandidate = diTauCandidates->begin(); 
 	diTauCandidate != diTauCandidates->end(); ++diTauCandidate ) {
@@ -568,7 +600,7 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
       
     for ( typename SVfitHistManagerEntryCollection::iterator svFitAlgorithmHistManager = svFitAlgorithmHistManagers_.begin();
 	  svFitAlgorithmHistManager != svFitAlgorithmHistManagers_.end(); ++svFitAlgorithmHistManager ) {
-      (*svFitAlgorithmHistManager)->customFillHistograms(*diTauCandidate, weight);
+      (*svFitAlgorithmHistManager)->customFillHistograms(*diTauCandidate, *recoVertices, weight);
     }
 
     int errorFlag;

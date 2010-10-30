@@ -37,6 +37,7 @@ class CompositePtrCandidateT1T2MEtSVfitHistManager : public HistManagerBase
 
 //--- configuration parameters
   edm::InputTag diTauCandidateSrc_;
+  edm::InputTag vertexSrc_;
 
   bool requireGenMatch_;
 
@@ -76,7 +77,8 @@ class CompositePtrCandidateT1T2MEtSVfitHistManager : public HistManagerBase
 	hX1res_(hX1res),
 	hX2res_(hX2res)
     {}
-    MonitorElement* hMass_;   
+    MonitorElement* hMass_; 
+    std::vector<MonitorElement*> hMassVsNumVertices_; 
     MonitorElement* hPolarizationHypothesis_;
     MonitorElement* hX1res_;
     MonitorElement* hX2res_;
@@ -84,6 +86,7 @@ class CompositePtrCandidateT1T2MEtSVfitHistManager : public HistManagerBase
 
   std::map<std::string, std::vector<massHypothesisEntry*> > massHypothesisEntries_; // key = algorithmName, 
                                                                                     // value = vector of massHypothesisEntries
+  vdouble vertexPtThresholds_;
 
   MonitorElement* hDiTauCandidateWeightPosLog_;
   MonitorElement* hDiTauCandidateWeightNegLog_;

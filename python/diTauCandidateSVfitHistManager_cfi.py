@@ -6,7 +6,7 @@ diTauCandidateSVfitHistManager = cms.PSet(
 
     diTauCandidateSource = cms.InputTag(''),
 
-    vertexSource = cms.InputTag('selectedPrimaryVertexPosition'),
+    vertexSource = cms.InputTag('selectedPrimaryVertexHighestPtTrackSum'),
     genParticleSource = cms.InputTag('genParticles'),
 
     dqmDirectory_store = cms.string('DiTauCandidateSVfitQuantities'),

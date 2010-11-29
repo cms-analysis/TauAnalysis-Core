@@ -37,9 +37,16 @@ class CompositePtrCandidateT1T2MEtSVfitHistManager : public HistManagerBase
 
 //--- configuration parameters
   edm::InputTag diTauCandidateSrc_;
+  edm::InputTag genParticleSrc_;
   edm::InputTag vertexSrc_;
 
   bool requireGenMatch_;
+
+  typedef std::vector<int> vint;
+  vint pdgIdsElectron_;
+  vint pdgIdsMuon_;
+  vint pdgIdsPhoton_;
+  vint pdgIdsJet_;
 
   typedef std::vector<std::string> vstring;
   vstring algorithmNames_;
@@ -69,23 +76,21 @@ class CompositePtrCandidateT1T2MEtSVfitHistManager : public HistManagerBase
   std::map<std::string, MonitorElement*> hMassLLvsRRbestLL_; // key = algorithmName
   std::map<std::string, MonitorElement*> hMassLLvsRRbestRR_; // key = algorithmName
 
-  struct massHypothesisEntry
+  struct massHypothesisEntryType
   {
-    massHypothesisEntry(MonitorElement* hMass, MonitorElement* hPolarizationHypothesis, MonitorElement* hX1res, MonitorElement* hX2res)
-      : hMass_(hMass),
-	hPolarizationHypothesis_(hPolarizationHypothesis),
-	hX1res_(hX1res),
-	hX2res_(hX2res)
-    {}
     MonitorElement* hMass_; 
+    MonitorElement* hMassGenLeg2Electron_;
+    MonitorElement* hMassGenLeg2Muon_;
+    MonitorElement* hMassGenLeg2Photon_;
+    MonitorElement* hMassGenLeg2Jet_;
     std::vector<MonitorElement*> hMassVsNumVertices_; 
     MonitorElement* hPolarizationHypothesis_;
     MonitorElement* hX1res_;
     MonitorElement* hX2res_;
   };
 
-  std::map<std::string, std::vector<massHypothesisEntry*> > massHypothesisEntries_; // key = algorithmName, 
-                                                                                    // value = vector of massHypothesisEntries
+  std::map<std::string, std::vector<massHypothesisEntryType*> > massHypothesisEntries_; // key = algorithmName, 
+                                                                                        // value = vector of massHypothesisEntries
   vdouble vertexPtThresholds_;
 
   MonitorElement* hDiTauCandidateWeightPosLog_;

@@ -429,6 +429,9 @@ CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::CompositePtrCandidateT1T2ME
   diTauCandidateSrc_ = cfg.getParameter<edm::InputTag>("diTauCandidateSource");
   //std::cout << " diTauCandidateSrc = " << diTauCandidateSrc_.label() << std::endl;
 
+  genParticleSrc_ = cfg.getParameter<edm::InputTag>("genParticleSource");
+  //std::cout << " genParticleSrc = " << genParticleSrc_ << std::endl;
+
   vertexSrc_ = cfg.getParameter<edm::InputTag>("vertexSource");
   //std::cout << " vertexSrc = " << vertexSrc_ << std::endl;
 
@@ -437,6 +440,17 @@ CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::CompositePtrCandidateT1T2ME
 
   requireGenMatch_ = cfg.getParameter<bool>("requireGenMatch");
   //std::cout << " requireGenMatch = " << requireGenMatch_ << std::endl;
+
+  pdgIdsElectron_.push_back(+11);
+  pdgIdsElectron_.push_back(-11);
+  pdgIdsMuon_.push_back(+13);
+  pdgIdsMuon_.push_back(-13);
+  pdgIdsPhoton_.push_back(22);
+  for ( int iQuarkType = 1; iQuarkType <= 6; ++iQuarkType ) {
+    pdgIdsJet_.push_back(+iQuarkType);
+    pdgIdsJet_.push_back(-iQuarkType);
+  }
+  pdgIdsJet_.push_back(21);
 
   std::string normalization_string = cfg.getParameter<std::string>("normalization");
   normMethod_ = getNormMethod(normalization_string, "diTauCandidates");
@@ -493,9 +507,9 @@ CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::~CompositePtrCandidateT1T2M
     delete (*it);
   }
 
-  for ( typename std::map<std::string, std::vector<massHypothesisEntry*> >::iterator it1 = massHypothesisEntries_.begin();
+  for ( typename std::map<std::string, std::vector<massHypothesisEntryType*> >::iterator it1 = massHypothesisEntries_.begin();
 	it1 != massHypothesisEntries_.end(); ++it1 ) {
-    for ( typename std::vector<massHypothesisEntry*>::iterator it2 = it1->second.begin();
+    for ( typename std::vector<massHypothesisEntryType*>::iterator it2 = it1->second.begin();
 	  it2 != it1->second.end(); ++it2 ) {
       delete (*it2);
     }
@@ -532,20 +546,31 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::bookHistogramsImp()
       std::ostringstream massHypothesisString;
       massHypothesisString << (*massHypothesis);
       
-      std::string hMassName_i = std::string("Mass").append("_").append(massHypothesisString.str());
-      MonitorElement* hMass_i = book1D(hMassName_i, hMassName_i, 50, 0., 250.);
+      massHypothesisEntryType* massHypothesisEntry = new massHypothesisEntryType();
+
+      std::string hMassName = std::string("Mass").append("_").append(massHypothesisString.str());
+      massHypothesisEntry->hMass_ = book1D(hMassName, hMassName, 50, 0., 250.);
       
-      std::string hPolarizationHypothesisName_i = std::string("PolarizationHypothesis").append("_").append(massHypothesisString.str());
-      MonitorElement* hPolarizationHypothesis_i = book1D(hPolarizationHypothesisName_i, hPolarizationHypothesisName_i, 6, -0.5, 5.5);
-      setAxisLabelPolarizationHypothesis(hPolarizationHypothesis_i->getTH1()->GetXaxis());
+      std::string hMassGenLeg2ElectronName = std::string("MassGenLeg2Electron").append("_").append(massHypothesisString.str());
+      massHypothesisEntry->hMassGenLeg2Electron_ = book1D(hMassGenLeg2ElectronName, hMassGenLeg2ElectronName, 50, 0., 250.);
+      std::string hMassGenLeg2MuonName = std::string("MassGenLeg2Muon").append("_").append(massHypothesisString.str());
+      massHypothesisEntry->hMassGenLeg2Muon_ = book1D(hMassGenLeg2MuonName, hMassGenLeg2MuonName, 50, 0., 250.);
+      std::string hMassGenLeg2PhotonName = std::string("MassGenLeg2Photon").append("_").append(massHypothesisString.str());
+      massHypothesisEntry->hMassGenLeg2Photon_ = book1D(hMassGenLeg2PhotonName, hMassGenLeg2PhotonName, 50, 0., 250.);
+      std::string hMassGenLeg2JetName = std::string("MassGenLeg2Jet").append("_").append(massHypothesisString.str());
+      massHypothesisEntry->hMassGenLeg2Jet_ = book1D(hMassGenLeg2JetName, hMassGenLeg2JetName, 50, 0., 250.);
       
-      std::string hX1resName_i = std::string("X1res").append("_").append(massHypothesisString.str());
-      MonitorElement* hX1res_i = book1D(hX1resName_i, hX1resName_i, 201, -1.005, + 1.005);
+      std::string hPolarizationHypothesisName = std::string("PolarizationHypothesis").append("_").append(massHypothesisString.str());
+      massHypothesisEntry->hPolarizationHypothesis_ = book1D(hPolarizationHypothesisName, hPolarizationHypothesisName, 6, -0.5, 5.5);
+      setAxisLabelPolarizationHypothesis(massHypothesisEntry->hPolarizationHypothesis_->getTH1()->GetXaxis());
       
-      std::string hX2resName_i = std::string("X2res").append("_").append(massHypothesisString.str());
-      MonitorElement* hX2res_i = book1D(hX2resName_i, hX2resName_i, 201, -1.005, + 1.005);
+      std::string hX1resName = std::string("X1res").append("_").append(massHypothesisString.str());
+      massHypothesisEntry->hX1res_ = book1D(hX1resName, hX1resName, 201, -1.005, + 1.005);
       
-      massHypothesisEntries_[*algorithmName].push_back(new massHypothesisEntry(hMass_i, hPolarizationHypothesis_i, hX1res_i, hX2res_i));
+      std::string hX2resName = std::string("X2res").append("_").append(massHypothesisString.str());
+      massHypothesisEntry->hX2res_ = book1D(hX2resName, hX2resName, 201, -1.005, + 1.005);      
+      
+      massHypothesisEntries_[*algorithmName].push_back(massHypothesisEntry);
     }
   }
 
@@ -574,6 +599,9 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
   //std::cout << " diTauCandidateSrc = " << diTauCandidateSrc_.label() << ":" 
   //	      << " diTauCandidates.size = " << diTauCandidates->size() << std::endl;
   
+  edm::Handle<reco::GenParticleCollection> genParticles;
+  if ( genParticleSrc_.label() != "" ) evt.getByLabel(genParticleSrc_, genParticles);
+
   edm::Handle<reco::VertexCollection> recoVertices;
   evt.getByLabel(vertexSrc_, recoVertices);
 
@@ -631,14 +659,14 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
       vstring polarizationHypotheses = polarizationHypotheses_[*algorithmName];
       if ( polarizationHypotheses.size() > 0 ) {
 	vdouble massHypotheses = massHypotheses_[*algorithmName];
-	std::vector<massHypothesisEntry*> massHypothesisEntries = massHypothesisEntries_[*algorithmName];
+	std::vector<massHypothesisEntryType*> massHypothesisEntries = massHypothesisEntries_[*algorithmName];
 	assert(massHypotheses.size() == massHypothesisEntries.size());
 
 	unsigned numMassHypotheses = massHypotheses.size();
 	for ( unsigned iMassHypothesis = 0; iMassHypothesis < numMassHypotheses; ++iMassHypothesis ) {
 	  double mass0 = massHypotheses[iMassHypothesis];
 	  
-	  massHypothesisEntry* massHypothesisEntry_i = massHypothesisEntries[iMassHypothesis];
+	  massHypothesisEntryType* massHypothesisEntry_i = massHypothesisEntries[iMassHypothesis];
 	  
 	  const SVfitDiTauSolution* svFitSolution_best = 0;
 	  double dMass_best = -1.;
@@ -656,6 +684,15 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
 	
 	  if ( svFitSolution_best ) {
 	    massHypothesisEntry_i->hMass_->Fill(svFitSolution_best->mass(), weight);
+	    double svFitMass = svFitSolution_best->mass();
+	    fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Electron_, svFitMass,
+				  diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsElectron_, weight);
+	    fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Muon_, svFitMass,
+				  diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsMuon_, weight);
+            fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Photon_,svFitMass,
+				  diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsPhoton_, weight);
+            fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Jet_, svFitMass,
+				  diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsJet_, weight);
 	    std::string polarizationHypothesisName_best = svFitSolution_best->polarizationHypothesisName();
 	    massHypothesisEntry_i->hPolarizationHypothesis_->getTH1()->Fill(polarizationHypothesisName_best.data(), weight);
 	    massHypothesisEntry_i->hX1res_->Fill(svFitSolution_best->leg1().x() - diTauCandidate->x1gen(), weight);

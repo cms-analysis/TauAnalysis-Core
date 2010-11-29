@@ -79,6 +79,7 @@ class SVfitHistManagerEntryBase : public HistManagerBase
   MonitorElement* hX2res_;
 
   MonitorElement* hMass_;
+  MonitorElement* hMassL_;
   MonitorElement* hMassXL_;
   MonitorElement* hMassActErr_;
   MonitorElement* hMassEstErr_;
@@ -185,6 +186,7 @@ void SVfitHistManagerEntryBase::bookHistogramsImp()
   hX2res_ = book1D("X2res", "rec. X_{2} - gen. X_{2}", 201, -1.005, + 1.005);
 
   hMass_ = book1D("Mass", "Mass", 50, 0., 250.);
+  hMassL_ = book1D("MassL", "Mass", 100, 0., 500.);
   hMassXL_ = book1D("MassXL", "Mass", 150, 0., 750.);
   hMassActErr_ = book1D("MassActErr", "rec. - gen. Mass", 100, -125., +125.);
   hMassEstErr_ = book1D("MassEstErr", "estimated Uncertainty on rec. Mass", 100, -125., +125.);
@@ -273,6 +275,7 @@ void SVfitHistManagerEntryBase::customFillHistograms(
     double genMass = diTauCandidate.p4gen().mass();
     double recMass = svFitSolution->mass();
     hMass_->Fill(recMass, weight);
+    hMassL_->Fill(recMass, weight);
     hMassXL_->Fill(recMass, weight);
     if ( genMass > 0. ) {
       hMassActErr_->Fill(recMass - genMass, weight);
@@ -553,6 +556,8 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::bookHistogramsImp()
 
       std::string hMassName = std::string("Mass").append("_").append(massHypothesisString.str());
       massHypothesisEntry->hMass_ = book1D(hMassName, hMassName, 50, 0., 250.);
+      std::string hMassLname = std::string("MassL").append("_").append(massHypothesisString.str());
+      massHypothesisEntry->hMassL_ = book1D(hMassLname, hMassLname, 100, 0., 500.);
       std::string hMassXLname = std::string("MassXL").append("_").append(massHypothesisString.str());
       massHypothesisEntry->hMassXL_ = book1D(hMassXLname, hMassXLname, 150, 0., 750.);
       
@@ -688,9 +693,10 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
 	  }
 	
 	  if ( svFitSolution_best ) {
-	    massHypothesisEntry_i->hMass_->Fill(svFitSolution_best->mass(), weight);
-	    massHypothesisEntry_i->hMassXL_->Fill(svFitSolution_best->mass(), weight);
 	    double svFitMass = svFitSolution_best->mass();
+	    massHypothesisEntry_i->hMass_->Fill(svFitMass, weight);
+	    massHypothesisEntry_i->hMassL_->Fill(svFitMass, weight);
+	    massHypothesisEntry_i->hMassXL_->Fill(svFitMass, weight);
 	    fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Electron_, svFitMass,
 				  diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsElectron_, weight);
 	    fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Muon_, svFitMass,

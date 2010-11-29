@@ -78,7 +78,8 @@ class CompositePtrCandidateT1T2MEtSVfitHistManager : public HistManagerBase
 
   struct massHypothesisEntryType
   {
-    MonitorElement* hMass_; 
+    MonitorElement* hMass_;
+    MonitorElement* hMassL_; 
     MonitorElement* hMassXL_; 
     MonitorElement* hMassGenLeg2Electron_;
     MonitorElement* hMassGenLeg2Muon_;

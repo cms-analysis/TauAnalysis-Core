@@ -697,14 +697,16 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
 	    massHypothesisEntry_i->hMass_->Fill(svFitMass, weight);
 	    massHypothesisEntry_i->hMassL_->Fill(svFitMass, weight);
 	    massHypothesisEntry_i->hMassXL_->Fill(svFitMass, weight);
-	    fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Electron_, svFitMass,
-				  diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsElectron_, weight);
-	    fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Muon_, svFitMass,
-				  diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsMuon_, weight);
-            fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Photon_,svFitMass,
-				  diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsPhoton_, weight);
-            fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Jet_, svFitMass,
-				  diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsJet_, weight);
+	    if ( genParticles.isValid() ) { 
+	      fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Electron_, svFitMass,
+				    diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsElectron_, weight);
+	      fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Muon_, svFitMass,
+				    diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsMuon_, weight);
+	      fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Photon_,svFitMass,
+				    diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsPhoton_, weight);
+	      fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Jet_, svFitMass,
+				    diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsJet_, weight);
+	    }
 	    std::string polarizationHypothesisName_best = svFitSolution_best->polarizationHypothesisName();
 	    massHypothesisEntry_i->hPolarizationHypothesis_->getTH1()->Fill(polarizationHypothesisName_best.data(), weight);
 	    massHypothesisEntry_i->hX1res_->Fill(svFitSolution_best->leg1().x() - diTauCandidate->x1gen(), weight);

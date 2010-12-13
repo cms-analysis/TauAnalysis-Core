@@ -18,6 +18,9 @@ svFitLikelihoodAnalyzer = cms.PSet(
         cms.PSet(
             name = cms.string("psKine_MEt_ptBalance")
         ),
+        cms.PSet(
+            name = cms.string("psKine_MEt_ptBalance2")
+        ),
         #cms.PSet(
             #name = cms.string("psKine_MEt_Track_ptBalance")
         #),

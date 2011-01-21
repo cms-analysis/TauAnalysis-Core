@@ -40,7 +40,7 @@ bool matchesGenCandidatePair(const CompositePtrCandidateT1T2MEt<T1,T2>& composit
 //-----------------------------------------------------------------------------------------------------------------------
 //
 
-class SVfitHistManagerEntryBase : public HistManagerBase 
+class SVfitHistManagerEntryBase : public HistManagerBase
 {
  public:
   SVfitHistManagerEntryBase(const edm::ParameterSet&);
@@ -61,7 +61,7 @@ class SVfitHistManagerEntryBase : public HistManagerBase
   template<typename T1, typename T2>
   const SVfitDiTauSolution* getSVfitSolution(const CompositePtrCandidateT1T2MEt<T1,T2>&);
 
-//-- dummy implementation of fillHistogramsImp function 
+//-- dummy implementation of fillHistogramsImp function
 //   declared as purely virtual function in HistManagerBase class
   void fillHistogramsImp(const edm::Event&, const edm::EventSetup&, double) {}
 
@@ -92,18 +92,18 @@ class SVfitHistManagerEntryBase : public HistManagerBase
   vdouble vertexPtThresholds_;
 
   MonitorElement* hPolarizationHypothesis_;
-  
+
   MonitorElement* hGenLeg1RecLeg2Mass_;
   MonitorElement* hRecLeg1GenLeg2Mass_;
 
-  MonitorElement* hMassVsNegLogLikelihood_; 
-  
+  MonitorElement* hMassVsNegLogLikelihood_;
+
   MonitorElement* hNegLogLikelihood_;
-  
+
   MonitorElement* hDecayTimeLeg1_;
   MonitorElement* hDecayTimeLeg2_;
-  
-  MonitorElement* hSVfitStatus_; 
+
+  MonitorElement* hSVfitStatus_;
 };
 
 SVfitHistManagerEntryBase::SVfitHistManagerEntryBase(const edm::ParameterSet& cfg)
@@ -111,9 +111,9 @@ SVfitHistManagerEntryBase::SVfitHistManagerEntryBase(const edm::ParameterSet& cf
 {
   //std::cout << "<SVfitHistManagerEntryBase::SVfitHistManagerEntryBase>:" << std::endl;
 
-  algorithmName_ = cfg.getParameter<std::string>("algorithmName");    
+  algorithmName_ = cfg.getParameter<std::string>("algorithmName");
   //std::cout << " algorithmName = " << algorithmName_ << std::endl;
-  polarizationHypothesis_ = cfg.exists("polarizationHypothesis") ? 
+  polarizationHypothesis_ = cfg.exists("polarizationHypothesis") ?
     cfg.getParameter<std::string>("polarizationHypothesis") : "Unknown";
   //std::cout << " polarizationHypothesis = " << polarizationHypothesis_ << std::endl;
 
@@ -130,7 +130,7 @@ SVfitHistManagerEntryBase::SVfitHistManagerEntryBase(const edm::ParameterSet& cf
 
     size_t pos_start = subString.find("{", 0);
     size_t pos_end = subString.find("}", pos_start);
-    subString = std::string(subString, pos_start + 1, pos_end - pos_start - 1); 
+    subString = std::string(subString, pos_start + 1, pos_end - pos_start - 1);
 
     pos_start = 0;
     do {
@@ -138,8 +138,8 @@ SVfitHistManagerEntryBase::SVfitHistManagerEntryBase(const edm::ParameterSet& cf
       bestPolarizationHypothesis_.push_back(std::string(subString, pos_start, pos_end - pos_start));
       pos_start = pos_end + 1;
     } while ( pos_end != std::string::npos );
-    
-    //std::cout << " bestPolarizationHypothesis = " << format_vstring(bestPolarizationHypothesis_) 
+
+    //std::cout << " bestPolarizationHypothesis = " << format_vstring(bestPolarizationHypothesis_)
     //	        << " (" << bestPolarizationHypothesis_.size() << " entries)" << std::endl;
 
 //--- replace "special" characters { '{', ',', '}' } by underscores,
@@ -150,7 +150,7 @@ SVfitHistManagerEntryBase::SVfitHistManagerEntryBase(const edm::ParameterSet& cf
     polarizationHypothesis_ = replace_string(polarizationHypothesis_, "}", "",  0,  1, errorFlag);
     //std::cout << " polarizationHypothesis(modified) = " << polarizationHypothesis_ << std::endl;
   }
-  
+
   dqmDirectory_store_ = cfg.getParameter<std::string>("dqmDirectory_store");
   dqmDirectory_store_ = dqmDirectoryName(dqmDirectory_store_).append(algorithmName_);
   if ( polarizationHypothesis_ != "Unknown" ) {
@@ -202,7 +202,7 @@ void SVfitHistManagerEntryBase::bookHistogramsImp()
     MonitorElement* me = book2D(meName_string.data(), meName_string.data(), 50, 0., 250., 10, -0.5, 9.5);
     hMassVsNumVertices_.push_back(me);
   }
- 
+
   hPolarizationHypothesis_ = book1D("PolarizationHypothesis", "(best) Polarization hypothesis", 6, -0.5, 5.5);
   setAxisLabelPolarizationHypothesis(hPolarizationHypothesis_->getTH1()->GetXaxis());
 
@@ -243,7 +243,7 @@ const SVfitDiTauSolution* SVfitHistManagerEntryBase::getSVfitSolution(const Comp
 
   return svFitSolution_best;
 }
- 
+
 template<typename T1, typename T2>
 void SVfitHistManagerEntryBase::customFillHistograms(
        const CompositePtrCandidateT1T2MEt<T1,T2>& diTauCandidate, const reco::VertexCollection& recoVertices, double weight)
@@ -252,7 +252,7 @@ void SVfitHistManagerEntryBase::customFillHistograms(
 
   if ( !svFitSolution ) {
     edm::LogError("<SVfitHistManagerEntryBase::customFillHistograms>")
-      << " No SVfitDiTauSolution object reconstructed for algorithm = " << algorithmName_ << "," 
+      << " No SVfitDiTauSolution object reconstructed for algorithm = " << algorithmName_ << ","
       << " polarizaton hypothesis = " << polarizationHypothesis_ << " --> histograms will NOT be filled !!";
     return;
   }
@@ -261,14 +261,14 @@ void SVfitHistManagerEntryBase::customFillHistograms(
     hX1_->Fill(svFitSolution->leg1().x(), weight);
     hX2_->Fill(svFitSolution->leg2().x(), weight);
 /*
-    if ( diTauCandidate->p4Leg1gen().energy() > epsilon && 
+    if ( diTauCandidate->p4Leg1gen().energy() > epsilon &&
       diTauCandidate->p4Leg2gen().energy() > epsilon ) {
       hX1vsGenX1_->Fill(diTauCandidate.x1gen(), svFitSolution->leg1().x(), weight);
       hX1vsGenX1Profile_->getTProfile()->Fill(diTauCandidate.x1gen(), svFitSolution->leg1().x(), weight);
       hX2vsGenX2_->Fill(diTauCandidate.x2gen(), svFitSolution->leg2().x(), weight);
       hX2vsGenX2Profile_->getTProfile()->Fill(diTauCandidate.x2gen(), svFitSolution->leg2().x(), weight);
     }
- */	
+ */
     hX1res_->Fill(svFitSolution->leg1().x() - diTauCandidate.x1gen(), weight);
     hX2res_->Fill(svFitSolution->leg2().x() - diTauCandidate.x2gen(), weight);
 
@@ -286,7 +286,7 @@ void SVfitHistManagerEntryBase::customFillHistograms(
 	if ( recMassErr > 0. ) hMassPull_->Fill((recMass - genMass)/recMassErr, weight);
       }
     }
-    
+
     std::vector<double> trackPtSums = compTrackPtSums(recoVertices);
     assert(vertexPtThresholds_.size() == hMassVsNumVertices_.size());
     size_t numVertexPtThresholds = vertexPtThresholds_.size();
@@ -307,7 +307,7 @@ void SVfitHistManagerEntryBase::customFillHistograms(
     hDecayTimeLeg1_->Fill(compDecayEigenTime(svFitSolution->leg1DecayDistance(), svFitSolution->leg1().p4().energy()), weight);
     hDecayTimeLeg2_->Fill(compDecayEigenTime(svFitSolution->leg2DecayDistance(), svFitSolution->leg2().p4().energy()), weight);
   }
-    
+
   hSVfitStatus_->Fill(svFitSolution->minuitStatus(), weight);
 }
 
@@ -323,7 +323,7 @@ class SVfitHistManagerEntryTemplateSpecific : public SVfitHistManagerEntryBase
     : SVfitHistManagerEntryBase(cfg)
   {}
 
-  void customFillHistograms(const CompositePtrCandidateT1T2MEt<T1,T2>& diTauCandidate, 
+  void customFillHistograms(const CompositePtrCandidateT1T2MEt<T1,T2>& diTauCandidate,
 			    const reco::VertexCollection& recoVertices, double weight)
   {
     SVfitHistManagerEntryBase::customFillHistograms<T1,T2>(diTauCandidate, recoVertices, weight);
@@ -344,7 +344,7 @@ class SVfitHistManagerEntryTemplateSpecific<pat::Muon,pat::Tau> : public SVfitHi
     : SVfitHistManagerEntryBase(cfg)
   {}
 
-  void customFillHistograms(const CompositePtrCandidateT1T2MEt<pat::Muon,pat::Tau>& diTauCandidate, 
+  void customFillHistograms(const CompositePtrCandidateT1T2MEt<pat::Muon,pat::Tau>& diTauCandidate,
 			    const reco::VertexCollection& recoVertices, double weight)
   {
     SVfitHistManagerEntryBase::customFillHistograms<pat::Muon,pat::Tau>(diTauCandidate, recoVertices, weight);
@@ -353,18 +353,18 @@ class SVfitHistManagerEntryTemplateSpecific<pat::Muon,pat::Tau> : public SVfitHi
 
     if ( !svFitSolution ) {
       edm::LogError("<SVfitHistManagerEntryTemplateSpecific::customFillHistograms>")
-	<< " No SVfitDiTauSolution object reconstructed for algorithm = " << algorithmName_ << "," 
+	<< " No SVfitDiTauSolution object reconstructed for algorithm = " << algorithmName_ << ","
 	<< " polarizaton hypothesis = " << polarizationHypothesis_ << " --> histograms will NOT be filled !!";
       return;
     }
-  
+
     if ( svFitSolution->isValidSolution() && diTauCandidate.leg2()->genJet() != 0 ) {
       double recMass = svFitSolution->mass();
-      
+
       int recTauDecayMode = diTauCandidate.leg2()->decayMode();
       std::string recTauDecayMode_string = getTauDecayModeName(recTauDecayMode);
       std::string genTauDecayMode = JetMCTagUtils::genTauDecayMode(*diTauCandidate.leg2()->genJet());
-      
+
       if ( recTauDecayMode_string == genTauDecayMode ) {
 	if ( recTauDecayMode == reco::PFTauDecayMode::tauDecay1ChargedPion0PiZero ) {
 	  hMassMuonOneProngNoPi0s_->Fill(recMass, weight);
@@ -479,7 +479,7 @@ CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::CompositePtrCandidateT1T2ME
 	cfgSVfitAlgorithm_customized.addParameter<std::string>("polarizationHypothesis", *polarizationHypothesis);
 	cfgSVfitAlgorithm_customized.addParameter<std::string>("dqmDirectory_store", dqmDirectory_store);
 	svFitAlgorithmHistManagers_.push_back(new SVfitHistManagerEntryTemplateSpecific<T1,T2>(cfgSVfitAlgorithm_customized));
-	
+
 	if ( polarizationHypothesis->find("best") == std::string::npos ) polarizationHypotheses_[name].push_back(*polarizationHypothesis);
       }
     } else {
@@ -488,7 +488,7 @@ CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::CompositePtrCandidateT1T2ME
       cfgSVfitAlgorithm_customized.addParameter<std::string>("dqmDirectory_store", dqmDirectory_store);
       svFitAlgorithmHistManagers_.push_back(new SVfitHistManagerEntryTemplateSpecific<T1,T2>(cfgSVfitAlgorithm_customized));
     }
-    
+
     if ( cfgSVfitAlgorithm->exists("massHypotheses") ) {
       massHypotheses_[name] = cfgSVfitAlgorithm->getParameter<vdouble>("massHypotheses");
     }
@@ -546,12 +546,12 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::bookHistogramsImp()
     hMassLLvsRRbestRR_[*algorithmName] = book2D("MassLLvsRRbestRR", "Mass for LL vs. RR (-log(Likelihood_{RR} < -log(Likelihood_{LL}",
 						50, 0., 250., 50, 0., 250.);
 
-    
+
     for ( vdouble::const_iterator massHypothesis = massHypotheses_[*algorithmName].begin();
 	  massHypothesis != massHypotheses_[*algorithmName].end(); ++massHypothesis ) {
       std::ostringstream massHypothesisString;
       massHypothesisString << (*massHypothesis);
-      
+
       massHypothesisEntryType* massHypothesisEntry = new massHypothesisEntryType();
 
       std::string hMassName = std::string("Mass").append("_").append(massHypothesisString.str());
@@ -560,7 +560,7 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::bookHistogramsImp()
       massHypothesisEntry->hMassL_ = book1D(hMassLname, hMassLname, 100, 0., 500.);
       std::string hMassXLname = std::string("MassXL").append("_").append(massHypothesisString.str());
       massHypothesisEntry->hMassXL_ = book1D(hMassXLname, hMassXLname, 150, 0., 750.);
-      
+
       std::string hMassGenLeg2ElectronName = std::string("MassGenLeg2Electron").append("_").append(massHypothesisString.str());
       massHypothesisEntry->hMassGenLeg2Electron_ = book1D(hMassGenLeg2ElectronName, hMassGenLeg2ElectronName, 50, 0., 250.);
       std::string hMassGenLeg2MuonName = std::string("MassGenLeg2Muon").append("_").append(massHypothesisString.str());
@@ -569,23 +569,23 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::bookHistogramsImp()
       massHypothesisEntry->hMassGenLeg2Photon_ = book1D(hMassGenLeg2PhotonName, hMassGenLeg2PhotonName, 50, 0., 250.);
       std::string hMassGenLeg2JetName = std::string("MassGenLeg2Jet").append("_").append(massHypothesisString.str());
       massHypothesisEntry->hMassGenLeg2Jet_ = book1D(hMassGenLeg2JetName, hMassGenLeg2JetName, 50, 0., 250.);
-      
+
       std::string hPolarizationHypothesisName = std::string("PolarizationHypothesis").append("_").append(massHypothesisString.str());
       massHypothesisEntry->hPolarizationHypothesis_ = book1D(hPolarizationHypothesisName, hPolarizationHypothesisName, 6, -0.5, 5.5);
       setAxisLabelPolarizationHypothesis(massHypothesisEntry->hPolarizationHypothesis_->getTH1()->GetXaxis());
-      
+
       std::string hX1resName = std::string("X1res").append("_").append(massHypothesisString.str());
       massHypothesisEntry->hX1res_ = book1D(hX1resName, hX1resName, 201, -1.005, + 1.005);
-      
+
       std::string hX2resName = std::string("X2res").append("_").append(massHypothesisString.str());
-      massHypothesisEntry->hX2res_ = book1D(hX2resName, hX2resName, 201, -1.005, + 1.005);      
-      
+      massHypothesisEntry->hX2res_ = book1D(hX2resName, hX2resName, 201, -1.005, + 1.005);
+
       massHypothesisEntries_[*algorithmName].push_back(massHypothesisEntry);
     }
   }
 
-  bookWeightHistograms(*dqmStore_, "DiTauCandidateWeight", "Composite Weight", 
-		       hDiTauCandidateWeightPosLog_, hDiTauCandidateWeightNegLog_, hDiTauCandidateWeightZero_, 
+  bookWeightHistograms(*dqmStore_, "DiTauCandidateWeight", "Composite Weight",
+		       hDiTauCandidateWeightPosLog_, hDiTauCandidateWeightNegLog_, hDiTauCandidateWeightZero_,
 		       hDiTauCandidateWeightLinear_);
 }
 
@@ -599,16 +599,16 @@ double CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::getDiTauCandidateWei
 
 template<typename T1, typename T2>
 void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(const edm::Event& evt, const edm::EventSetup& es, double evtWeight)
-{  
-  //std::cout << "<CompositePtrCandidateT1T2MEtSVfitHistManager::fillHistogramsImp>:" << std::endl; 
-  
+{
+  //std::cout << "<CompositePtrCandidateT1T2MEtSVfitHistManager::fillHistogramsImp>:" << std::endl;
+
   typedef std::vector<CompositePtrCandidateT1T2MEt<T1,T2> > CompositePtrCandidateCollection;
   edm::Handle<CompositePtrCandidateCollection> diTauCandidates;
   getCollection(evt, diTauCandidateSrc_, diTauCandidates);
-  
-  //std::cout << " diTauCandidateSrc = " << diTauCandidateSrc_.label() << ":" 
+
+  //std::cout << " diTauCandidateSrc = " << diTauCandidateSrc_.label() << ":"
   //	      << " diTauCandidates.size = " << diTauCandidates->size() << std::endl;
-  
+
   edm::Handle<reco::GenParticleCollection> genParticles;
   if ( genParticleSrc_.label() != "" ) evt.getByLabel(genParticleSrc_, genParticles);
 
@@ -616,26 +616,26 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
   evt.getByLabel(vertexSrc_, recoVertices);
 
   double diTauCandidateWeightSum = 0.;
-  for ( typename CompositePtrCandidateCollection::const_iterator diTauCandidate = diTauCandidates->begin(); 
+  for ( typename CompositePtrCandidateCollection::const_iterator diTauCandidate = diTauCandidates->begin();
 	diTauCandidate != diTauCandidates->end(); ++diTauCandidate ) {
     if ( requireGenMatch_ && !matchesGenCandidatePair(*diTauCandidate) ) continue;
-    
+
     diTauCandidateWeightSum += getDiTauCandidateWeight(*diTauCandidate);
   }
-  
-  for ( typename CompositePtrCandidateCollection::const_iterator diTauCandidate = diTauCandidates->begin(); 
+
+  for ( typename CompositePtrCandidateCollection::const_iterator diTauCandidate = diTauCandidates->begin();
 	diTauCandidate != diTauCandidates->end(); ++diTauCandidate ) {
-    
+
     //bool isGenMatched = matchesGenCandidatePair(*diTauCandidate);
-    //std::cout << " Pt = " << diTauCandidate->pt() << ", phi = " << diTauCandidate->phi() << "," 
+    //std::cout << " Pt = " << diTauCandidate->pt() << ", phi = " << diTauCandidate->phi() << ","
     //          << " visMass = " << diTauCandidate->p4Vis().mass() << std::endl;
     //std::cout << " isGenMatched = " << isGenMatched << std::endl;
-    
+
     if ( requireGenMatch_ && !matchesGenCandidatePair(*diTauCandidate) ) continue;
-    
+
     double diTauCandidateWeight = getDiTauCandidateWeight(*diTauCandidate);
     double weight = getWeight(evtWeight, diTauCandidateWeight, diTauCandidateWeightSum);
-      
+
     for ( typename SVfitHistManagerEntryCollection::iterator svFitAlgorithmHistManager = svFitAlgorithmHistManagers_.begin();
 	  svFitAlgorithmHistManager != svFitAlgorithmHistManagers_.end(); ++svFitAlgorithmHistManager ) {
       (*svFitAlgorithmHistManager)->customFillHistograms(*diTauCandidate, *recoVertices, weight);
@@ -654,7 +654,7 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
 	if      ( negLogLikelihood_LR < negLogLikelihood_RL) hMassLRvsRLbestLR_[*algorithmName]->Fill(mass_RL, mass_LR,  weight);
 	else if ( negLogLikelihood_RL < negLogLikelihood_LR) hMassLRvsRLbestRL_[*algorithmName]->Fill(mass_RL, mass_LR,  weight);
       }
-      
+
       const SVfitDiTauSolution* svFitSolution_LL = diTauCandidate->svFitSolution(*algorithmName, "LL", &errorFlag);
       const SVfitDiTauSolution* svFitSolution_RR = diTauCandidate->svFitSolution(*algorithmName, "RR", &errorFlag);
       if ( svFitSolution_LL && svFitSolution_RR ) {
@@ -675,29 +675,29 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
 	unsigned numMassHypotheses = massHypotheses.size();
 	for ( unsigned iMassHypothesis = 0; iMassHypothesis < numMassHypotheses; ++iMassHypothesis ) {
 	  double mass0 = massHypotheses[iMassHypothesis];
-	  
+
 	  massHypothesisEntryType* massHypothesisEntry_i = massHypothesisEntries[iMassHypothesis];
-	  
+
 	  const SVfitDiTauSolution* svFitSolution_best = 0;
 	  double dMass_best = -1.;
 	  for ( vstring::const_iterator polarizationHypothesis_i = polarizationHypotheses.begin();
 		polarizationHypothesis_i != polarizationHypotheses.end(); ++polarizationHypothesis_i ) {
 	    const SVfitDiTauSolution* svFitSolution_i = diTauCandidate->svFitSolution(*algorithmName, *polarizationHypothesis_i);
 	    if ( !svFitSolution_i ) continue;
-	    
+
 	    double dMass_i = TMath::Abs(mass0 - svFitSolution_i->mass());
 	    if ( svFitSolution_best == 0 || dMass_i < dMass_best ) {
 	      svFitSolution_best = svFitSolution_i;
 	      dMass_best = dMass_i;
 	    }
 	  }
-	
+
 	  if ( svFitSolution_best ) {
 	    double svFitMass = svFitSolution_best->mass();
 	    massHypothesisEntry_i->hMass_->Fill(svFitMass, weight);
 	    massHypothesisEntry_i->hMassL_->Fill(svFitMass, weight);
 	    massHypothesisEntry_i->hMassXL_->Fill(svFitMass, weight);
-	    if ( genParticles.isValid() ) { 
+	    if ( genParticles.isValid() ) {
 	      fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Electron_, svFitMass,
 				    diTauCandidate->leg2()->p4(),  *genParticles, pdgIdsElectron_, weight);
 	      fillHistogramGenMatch(massHypothesisEntry_i->hMassGenLeg2Muon_, svFitMass,
@@ -715,15 +715,15 @@ void CompositePtrCandidateT1T2MEtSVfitHistManager<T1,T2>::fillHistogramsImp(cons
 	}
       }
     }
-    
-    fillWeightHistograms(hDiTauCandidateWeightPosLog_, hDiTauCandidateWeightNegLog_, hDiTauCandidateWeightZero_, 
+
+    fillWeightHistograms(hDiTauCandidateWeightPosLog_, hDiTauCandidateWeightNegLog_, hDiTauCandidateWeightZero_,
 			 hDiTauCandidateWeightLinear_, diTauCandidateWeight);
   }
 }
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-#include "DataFormats/Candidate/interface/Candidate.h" 
+#include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
@@ -744,7 +744,7 @@ DEFINE_EDM_PLUGIN(AnalyzerPluginFactory, PATDiTauPairSVfitHistManager, "PATDiTau
 DEFINE_EDM_PLUGIN(HistManagerPluginFactory, PATDiTauPairSVfitHistManager, "PATDiTauPairSVfitHistManager");
 DEFINE_EDM_PLUGIN(AnalyzerPluginFactory, PATElecMuPairSVfitHistManager, "PATElecMuPairSVfitHistManager");
 DEFINE_EDM_PLUGIN(HistManagerPluginFactory, PATElecMuPairSVfitHistManager, "PATElecMuPairSVfitHistManager");
-  
+
 #include "TauAnalysis/Core/interface/HistManagerAdapter.h"
 
 typedef HistManagerAdapter<DiCandidatePairSVfitHistManager> DiCandidatePairSVfitAnalyzer;

@@ -81,6 +81,7 @@ class SVfitHistManagerEntryBase : public HistManagerBase
   MonitorElement* hMass_;
   MonitorElement* hMassL_;
   MonitorElement* hMassXL_;
+  MonitorElement* hRecMassVsGenMassL_;
   MonitorElement* hMassActErr_;
   MonitorElement* hMassEstErr_;
   MonitorElement* hMassRes_;
@@ -95,7 +96,7 @@ class SVfitHistManagerEntryBase : public HistManagerBase
 
   MonitorElement* hGenLeg1RecLeg2Mass_;
   MonitorElement* hRecLeg1GenLeg2Mass_;
-
+  
   MonitorElement* hMassVsNegLogLikelihood_;
 
   MonitorElement* hNegLogLikelihood_;
@@ -188,6 +189,7 @@ void SVfitHistManagerEntryBase::bookHistogramsImp()
   hMass_ = book1D("Mass", "Mass", 50, 0., 250.);
   hMassL_ = book1D("MassL", "Mass", 100, 0., 500.);
   hMassXL_ = book1D("MassXL", "Mass", 150, 0., 750.);
+  hRecMassVsGenMassL_ = book2D("RecMassVsGenMassL", "rec. Mass vs. gen. Mass", 25, 0., 500., 25, 0., 500.);
   hMassActErr_ = book1D("MassActErr", "rec. - gen. Mass", 100, -125., +125.);
   hMassEstErr_ = book1D("MassEstErr", "estimated Uncertainty on rec. Mass", 100, -125., +125.);
   hMassRes_ = book1D("MassRes", "Mass Resolution", 100, -2.5, +2.5);
@@ -277,6 +279,7 @@ void SVfitHistManagerEntryBase::customFillHistograms(
     hMass_->Fill(recMass, weight);
     hMassL_->Fill(recMass, weight);
     hMassXL_->Fill(recMass, weight);
+    hRecMassVsGenMassL_->Fill(genMass, recMass, weight);
     if ( genMass > 0. ) {
       hMassActErr_->Fill(recMass - genMass, weight);
       hMassRes_->Fill((recMass - genMass)/genMass, weight);

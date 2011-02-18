@@ -78,6 +78,8 @@ class SVfitHistManagerEntryBase : public HistManagerBase
   MonitorElement* hX1res_;
   MonitorElement* hX2res_;
 
+  MonitorElement* hPt_;
+
   MonitorElement* hMass_;
   MonitorElement* hMassL_;
   MonitorElement* hMassXL_;
@@ -186,6 +188,8 @@ void SVfitHistManagerEntryBase::bookHistogramsImp()
   hX1res_ = book1D("X1res", "rec. X_{1} - gen. X_{1}", 201, -1.005, + 1.005);
   hX2res_ = book1D("X2res", "rec. X_{2} - gen. X_{2}", 201, -1.005, + 1.005);
 
+  hPt_ = book1D("Pt", "P_{T}", 40, 0., 200.);
+
   hMass_ = book1D("Mass", "Mass", 50, 0., 250.);
   hMassL_ = book1D("MassL", "Mass", 100, 0., 500.);
   hMassXL_ = book1D("MassXL", "Mass", 150, 0., 750.);
@@ -273,6 +277,8 @@ void SVfitHistManagerEntryBase::customFillHistograms(
  */
     hX1res_->Fill(svFitSolution->leg1().x() - diTauCandidate.x1gen(), weight);
     hX2res_->Fill(svFitSolution->leg2().x() - diTauCandidate.x2gen(), weight);
+
+    hPt_->Fill(svFitSolution->p4().pt(), weight);
 
     double genMass = diTauCandidate.p4gen().mass();
     double recMass = svFitSolution->mass();

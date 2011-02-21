@@ -38,7 +38,7 @@ svFitLikelihoodAnalyzer = cms.PSet(
     svFitLikelihoodFunctions = cms.VPSet(
         svFitLikelihoodDiTauKinematicsPhaseSpace,
         svFitLikelihoodDiTauKinematicsPolarized,
-        svFitLikelihoodMEt,
+        svFitLikelihoodDiTauMEt,
         svFitLikelihoodDiTauPtBalance
     )
 )

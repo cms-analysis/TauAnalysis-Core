@@ -13,7 +13,6 @@
 <use   name="TauAnalysis/DQMTools"/>
 <use   name="TauAnalysis/GenSimTools"/>
 <use   name="root"/>
-<use   name="classlib"/>
 <export>
   <lib   name="1"/>
 </export>

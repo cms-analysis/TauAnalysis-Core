@@ -569,10 +569,10 @@ void TauHistManager::fillHistogramsImp(const edm::Event& evt, const edm::EventSe
     hTauNumTracksSignalCone_->Fill(patTau->signalPFChargedHadrCands().size(), weight);
     hTauNumTracksIsoCone_->Fill(patTau->isolationTracks().size(), weight);
 
-    hTauLeadPFChargedHadCandRefValidity_ ->Fill( isValidRef( patTau->leadPFChargedHadrCand() ) );
-    if( isValidRef( patTau->leadPFChargedHadrCand() ) ) {
-        hTauLeadKfTrkRefValidity_->Fill( isValidRef( patTau->leadPFChargedHadrCand()->trackRef() ) );
-        hTauLeadGsfTrkRefValidity_->Fill( isValidRef( patTau->leadPFChargedHadrCand()->gsfTrackRef() ) );
+    hTauLeadPFChargedHadCandRefValidity_->Fill(isValidRef(patTau->leadPFChargedHadrCand()));
+    if ( isValidRef(patTau->leadPFChargedHadrCand()) ) {
+      hTauLeadKfTrkRefValidity_->Fill(isValidRef(patTau->leadPFChargedHadrCand()->trackRef()), weight);
+      hTauLeadGsfTrkRefValidity_->Fill(isValidRef(patTau->leadPFChargedHadrCand()->gsfTrackRef()), weight);
     }
 
     if ( isValidRef(patTau->leadPFChargedHadrCand()) && isValidRef(patTau->leadPFChargedHadrCand()->trackRef()) ) {
@@ -823,14 +823,14 @@ void TauHistManager::fillTauIsoHistograms(const pat::Tau& patTau, double weight)
 
   if ( makeIsoPtCtrlHistograms_ ) {
     double sumPtIsolationConePFChargedHadrons = 0.;
-    for ( reco::PFCandidateRefVector::const_iterator pfChargedHadron = patTau.isolationPFChargedHadrCands().begin();
+    for ( std::vector<reco::PFCandidatePtr>::const_iterator pfChargedHadron = patTau.isolationPFChargedHadrCands().begin();
 	  pfChargedHadron != patTau.isolationPFChargedHadrCands().end(); ++pfChargedHadron ) {
       if ( (*pfChargedHadron)->pt() > 1.0 ) sumPtIsolationConePFChargedHadrons += (*pfChargedHadron)->pt();
     }
     hTauPFChargedHadronIsoPtCtrl_->Fill(sumPtIsolationConePFChargedHadrons, patTau.chargedHadronIso(), weight);
 
     double sumPtIsolationConePFGammas = 0.;
-    for ( reco::PFCandidateRefVector::const_iterator pfGamma = patTau.isolationPFGammaCands().begin();
+    for ( std::vector<reco::PFCandidatePtr>::const_iterator pfGamma = patTau.isolationPFGammaCands().begin();
 	  pfGamma != patTau.isolationPFGammaCands().end(); ++pfGamma ) {
       if ( (*pfGamma)->pt() > 1.5 ) sumPtIsolationConePFGammas += (*pfGamma)->pt();
     }
